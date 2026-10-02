@@ -1,437 +1,625 @@
-package com.memecio.app;
+package com.memecio.app
 
-import com.memecio.app.js.JsRuntime;
+import android.app.Activity
+import android.app.AlertDialog
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
+import android.net.Uri
+import android.os.Bundle
+import android.provider.Settings
+import android.view.View
+import android.widget.TextView
+import android.widget.Toast
+import com.memecio.app.js.JsRuntime
 
-import android.app.Activity;
-import android.content.Intent;
-import android.content.pm.ActivityInfo;
-import android.content.res.Configuration;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.TextView;
+class CalculatorActivity : Activity() {
 
-public class CalculatorActivity extends Activity {
+    private var tvDisplay: TextView? = null
+    private var tvDisplayScientific: TextView? = null
+    private var rawInput = ""
+    private var delStreak = 0
+    private var delStreakStart = ""
+    private var isScientific = false
+    private var lastAppliedMode: String? = null
 
-    private TextView tvDisplay;
-    private TextView tvDisplayScientific;
-    private String rawInput = "";
-    private int delStreak = 0;
-    private String delStreakStart = "";
-    private static final String SECRET_CODE = "140399";
-    private boolean isScientific = false;
-
-    private String lastAppliedMode = null;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        applyModeAndLayout();
-        CrashCheckHelper.checkAndShow(this);
-        setupButtons();
+    companion object {
+        private const val SECRET_CODE = "140399"
     }
 
-    private void applyModeAndLayout() {
-        String mode = DisplayModeStore.getEffectiveMode(this);
-        lastAppliedMode = mode;
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        applyModeAndLayout()
+        CrashCheckHelper.checkAndShow(this)
+        setupButtons()
+    }
 
-        if (mode.equals("tv")) {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-            setContentView(R.layout.activity_calculator_scientific);
-            tvDisplayScientific = findViewById(R.id.tvDisplayScientific);
-            isScientific = true;
+    private fun applyModeAndLayout() {
+        val mode = DisplayModeStore.getEffectiveMode(this)
+        lastAppliedMode = mode
+        if (mode == "tv") {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            setContentView(R.layout.activity_calculator_scientific)
+            tvDisplayScientific = findViewById(R.id.tvDisplayScientific)
+            isScientific = true
         } else {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-            int orientation = getResources().getConfiguration().orientation;
-
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            val orientation = resources.configuration.orientation
             if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                setContentView(R.layout.activity_calculator_scientific);
-                tvDisplayScientific = findViewById(R.id.tvDisplayScientific);
-                isScientific = true;
+                setContentView(R.layout.activity_calculator_scientific)
+                tvDisplayScientific = findViewById(R.id.tvDisplayScientific)
+                isScientific = true
             } else {
-                setContentView(R.layout.activity_calculator);
-                tvDisplay = findViewById(R.id.tvDisplay);
-                isScientific = false;
+                setContentView(R.layout.activity_calculator)
+                tvDisplay = findViewById(R.id.tvDisplay)
+                isScientific = false
             }
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        String currentMode = DisplayModeStore.getEffectiveMode(this);
-        if (lastAppliedMode != null && !lastAppliedMode.equals(currentMode)) {
-            recreate();
+    override fun onResume() {
+        super.onResume()
+        val currentMode = DisplayModeStore.getEffectiveMode(this)
+        if (lastAppliedMode != null && lastAppliedMode != currentMode) {
+            recreate()
         }
     }
 
-    private void testJsRhino() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("1+1 = ").append(JsRuntime.evalToString("1+1")).append("\n");
-        sb.append("2*3+4 = ").append(JsRuntime.evalToString("2*3+4")).append("\n");
-        sb.append("'hello'+' world' = ").append(JsRuntime.evalToString("'hello' + ' world'")).append("\n");
-        sb.append("Math.max(1,5,3) = ").append(JsRuntime.evalToString("Math.max(1,5,3)")).append("\n");
-        sb.append("[1,2,3].map(x=>x*2).join(',') = ").append(JsRuntime.evalToString("[1,2,3].map(x=>x*2).join(',')")).append("\n");
-        sb.append("JSON.parse test = ").append(JsRuntime.evalToString("JSON.parse('{\"a\":1}').a")).append("\n");
-
-        String result = sb.toString();
-
+    private fun testJsRhino() {
+        val sb = StringBuilder()
+        sb.append("1+1 = ").append(JsRuntime.evalToString("1+1")).append("\n")
+        sb.append("2*3+4 = ").append(JsRuntime.evalToString("2*3+4")).append("\n")
+        sb.append("'hello'+' world' = ").append(JsRuntime.evalToString("'hello' + ' world'")).append("\n")
+        sb.append("Math.max(1,5,3) = ").append(JsRuntime.evalToString("Math.max(1,5,3)")).append("\n")
+        sb.append("[1,2,3].map(x=>x*2).join(',') = ").append(JsRuntime.evalToString("[1,2,3].map(x=>x*2).join(',')")).append("\n")
+        sb.append("JSON.parse test = ").append(JsRuntime.evalToString("JSON.parse('{\"a\":1}').a")).append("\n")
+        val result = sb.toString()
         try {
-            new android.app.AlertDialog.Builder(this)
+            AlertDialog.Builder(this)
                 .setTitle("JS Runtime OK")
                 .setMessage(result)
                 .setPositiveButton("OK", null)
-                .setNeutralButton("Salin", (d, w) -> {
+                .setNeutralButton("Salin") { _, _ ->
                     try {
-                        android.content.ClipboardManager cm = (android.content.ClipboardManager)
-                            getSystemService(CLIPBOARD_SERVICE);
-                        cm.setPrimaryClip(android.content.ClipData.newPlainText("js", result));
-                        android.widget.Toast.makeText(this, "Disalin", android.widget.Toast.LENGTH_SHORT).show();
-                    } catch (Throwable ignored) {}
-                })
-                .show();
-        } catch (Throwable t) {
-            new android.app.AlertDialog.Builder(this)
+                        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        cm.setPrimaryClip(ClipData.newPlainText("js", result))
+                        Toast.makeText(this, "Disalin", Toast.LENGTH_SHORT).show()
+                    } catch (ignored: Throwable) {
+                    }
+                }
+                .show()
+        } catch (t: Throwable) {
+            AlertDialog.Builder(this)
                 .setTitle("Dialog error")
-                .setMessage(t.getMessage())
+                .setMessage(t.message)
                 .setPositiveButton("OK", null)
-                .show();
+                .show()
         }
     }
 
-    private void testJsHttp() {
-        StringBuilder sb = new StringBuilder();
-        try { JsRuntime.reset(); } catch (Throwable ignored) {}
-        String sep = System.lineSeparator();
+    private fun testJsHttp() {
+        val sb = StringBuilder()
         try {
-            sb.append("bridgeReady=").append(JsRuntime.evalToString("typeof __jsBridgeReady")).append(sep);
-            sb.append("http=").append(JsRuntime.evalToString("typeof http")).append(sep);
-            sb.append("console=").append(JsRuntime.evalToString("typeof console")).append(sep);
-            sb.append("get=").append(JsRuntime.evalToString("var r = http.get('https://example.com'); r.code + ':' + r.text.length")).append(sep);
-            sb.append("title=").append(JsRuntime.evalToString("var r2 = http.get('https://example.com'); r2.document().title()"));
-        } catch (Throwable t) {
-            sb.append("ERROR: ").append(t.toString());
+            JsRuntime.reset()
+        } catch (ignored: Throwable) {
         }
-        final String result = sb.toString();
+        val sep = System.lineSeparator()
         try {
-            new android.app.AlertDialog.Builder(this)
+            sb.append("bridgeReady=").append(JsRuntime.evalToString("typeof __jsBridgeReady")).append(sep)
+            sb.append("http=").append(JsRuntime.evalToString("typeof http")).append(sep)
+            sb.append("console=").append(JsRuntime.evalToString("typeof console")).append(sep)
+            sb.append("get=").append(JsRuntime.evalToString("var r = http.get('https://example.com'); r.code + ':' + r.text.length")).append(sep)
+            sb.append("title=").append(JsRuntime.evalToString("var r2 = http.get('https://example.com'); r2.document().title()"))
+        } catch (t: Throwable) {
+            sb.append("ERROR: ").append(t.toString())
+        }
+        val result = sb.toString()
+        try {
+            AlertDialog.Builder(this)
                 .setTitle("HTTP Test")
                 .setMessage(result)
                 .setPositiveButton("OK", null)
-                .setNeutralButton("Salin", (d, w) -> {
+                .setNeutralButton("Salin") { _, _ ->
                     try {
-                        android.content.ClipboardManager cm = (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-                        cm.setPrimaryClip(android.content.ClipData.newPlainText("http", result));
-                        android.widget.Toast.makeText(this, "Disalin", android.widget.Toast.LENGTH_SHORT).show();
-                    } catch (Throwable ignored) {}
-                })
-                .show();
-        } catch (Throwable t) {}
+                        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        cm.setPrimaryClip(ClipData.newPlainText("http", result))
+                        Toast.makeText(this, "Disalin", Toast.LENGTH_SHORT).show()
+                    } catch (ignored: Throwable) {
+                    }
+                }
+                .show()
+        } catch (t: Throwable) {
+        }
     }
 
-    private void setupButtons() {
+    private fun setupButtons() {
         if (isScientific) {
-            bindScienceButtons();
+            bindScienceButtons()
         } else {
-            bindPortraitButtons();
+            bindPortraitButtons()
         }
     }
 
-    private void bindPortraitButtons() {
-        int[] digitIds = {
-                R.id.btn0, R.id.btn1, R.id.btn2, R.id.btn3, R.id.btn4,
-                R.id.btn5, R.id.btn6, R.id.btn7, R.id.btn8, R.id.btn9, R.id.btn00
-        };
-        for (int id : digitIds) {
-            TextView btn = findViewById(id);
-            btn.setOnClickListener(v -> {
-                rawInput += ((TextView) v).getText().toString();
-                updateDisplay();
-            });
-        }
-
-        findViewById(R.id.btnDot).setOnClickListener(v -> { rawInput += "."; updateDisplay(); });
-        findViewById(R.id.btnPlus).setOnClickListener(v -> { rawInput += "+"; updateDisplay(); });
-        findViewById(R.id.btnMinus).setOnClickListener(v -> { rawInput += "-"; updateDisplay(); });
-        findViewById(R.id.btnMultiply).setOnClickListener(v -> { rawInput += "*"; updateDisplay(); });
-        findViewById(R.id.btnDivide).setOnClickListener(v -> { rawInput += "/"; updateDisplay(); });
-
-        findViewById(R.id.btnClear).setOnClickListener(v -> { rawInput = ""; delStreak = 0; delStreakStart = ""; updateDisplay(); });
-        findViewById(R.id.btnDel).setOnClickListener(v -> {
-            if (delStreak == 0) delStreakStart = rawInput;
-            delStreak++;
-            if (!rawInput.isEmpty()) rawInput = rawInput.substring(0, rawInput.length() - 1);
-            updateDisplay();
-        });
-        findViewById(R.id.btnPercent).setOnClickListener(v -> {
-            try {
-                double val = Double.parseDouble(rawInput);
-                rawInput = formatResult(val / 100.0);
-            } catch (Exception ignored) { }
-            updateDisplay();
-        });
-        findViewById(R.id.btnEquals).setOnClickListener(v -> {
-            // Cek pola: 0000 + DEL 3x + =  -> toggle FLAG_SECURE
-            if (delStreak == 3 && "0000".equals(delStreakStart)) {
-                boolean newState = PrivacyStore.toggle();
-                android.widget.Toast.makeText(CalculatorActivity.this,
-                    "FLAG SECURE " + (newState ? "ON" : "OFF"),
-                    android.widget.Toast.LENGTH_SHORT).show();
-                rawInput = "";
-                delStreak = 0;
-                delStreakStart = "";
-                updateDisplay();
-                return;
+    private fun bindPortraitButtons() {
+        val digitIds = intArrayOf(
+            R.id.btn0, R.id.btn1, R.id.btn2, R.id.btn3, R.id.btn4,
+            R.id.btn5, R.id.btn6, R.id.btn7, R.id.btn8, R.id.btn9, R.id.btn00
+        )
+        for (id in digitIds) {
+            val btn = findViewById<TextView>(id)
+            btn.setOnClickListener { v ->
+                rawInput += (v as TextView).text.toString()
+                updateDisplay()
             }
-            delStreak = 0;
-            delStreakStart = "";
-            onEquals();
-        });
+        }
+        findViewById<View>(R.id.btnDot).setOnClickListener {
+            rawInput += "."
+            updateDisplay()
+        }
+        findViewById<View>(R.id.btnPlus).setOnClickListener {
+            rawInput += "+"
+            updateDisplay()
+        }
+        findViewById<View>(R.id.btnMinus).setOnClickListener {
+            rawInput += "-"
+            updateDisplay()
+        }
+        findViewById<View>(R.id.btnMultiply).setOnClickListener {
+            rawInput += "*"
+            updateDisplay()
+        }
+        findViewById<View>(R.id.btnDivide).setOnClickListener {
+            rawInput += "/"
+            updateDisplay()
+        }
+        findViewById<View>(R.id.btnClear).setOnClickListener {
+            rawInput = ""
+            delStreak = 0
+            delStreakStart = ""
+            updateDisplay()
+        }
+        findViewById<View>(R.id.btnDel).setOnClickListener {
+            if (delStreak == 0) delStreakStart = rawInput
+            delStreak++
+            if (rawInput.isNotEmpty()) rawInput = rawInput.substring(0, rawInput.length - 1)
+            updateDisplay()
+        }
+        findViewById<View>(R.id.btnPercent).setOnClickListener {
+            try {
+                val v = rawInput.toDouble()
+                rawInput = formatResult(v / 100.0)
+            } catch (ignored: Exception) {
+            }
+            updateDisplay()
+        }
+        findViewById<View>(R.id.btnEquals).setOnClickListener {
+            if (delStreak == 3 && "0000" == delStreakStart) {
+                val newState = PrivacyStore.toggle()
+                Toast.makeText(this, "FLAG SECURE " + if (newState) "ON" else "OFF", Toast.LENGTH_SHORT).show()
+                rawInput = ""
+                delStreak = 0
+                delStreakStart = ""
+                updateDisplay()
+                return@setOnClickListener
+            }
+            delStreak = 0
+            delStreakStart = ""
+            onEquals()
+        }
     }
 
-    private void bindScienceButtons() {
-        int[] digitIds = {
-                R.id.btn0Sci, R.id.btn1Sci, R.id.btn2Sci, R.id.btn3Sci, R.id.btn4Sci,
-                R.id.btn5Sci, R.id.btn6Sci, R.id.btn7Sci, R.id.btn8Sci, R.id.btn9Sci, R.id.btn00Sci
-        };
-        for (int id : digitIds) {
-            TextView btn = findViewById(id);
-            btn.setOnClickListener(v -> {
-                rawInput += ((TextView) v).getText().toString();
-                updateDisplayScientific();
-            });
+    private fun bindScienceButtons() {
+        val digitIds = intArrayOf(
+            R.id.btn0Sci, R.id.btn1Sci, R.id.btn2Sci, R.id.btn3Sci, R.id.btn4Sci,
+            R.id.btn5Sci, R.id.btn6Sci, R.id.btn7Sci, R.id.btn8Sci, R.id.btn9Sci, R.id.btn00Sci
+        )
+        for (id in digitIds) {
+            val btn = findViewById<TextView>(id)
+            btn.setOnClickListener { v ->
+                rawInput += (v as TextView).text.toString()
+                updateDisplayScientific()
+            }
         }
-
-        findViewById(R.id.btnDotSci).setOnClickListener(v -> { rawInput += "."; updateDisplayScientific(); });
-        findViewById(R.id.btnPlusSci).setOnClickListener(v -> { rawInput += "+"; updateDisplayScientific(); });
-        findViewById(R.id.btnMinusSci).setOnClickListener(v -> { rawInput += "-"; updateDisplayScientific(); });
-        findViewById(R.id.btnMultiplySci).setOnClickListener(v -> { rawInput += "*"; updateDisplayScientific(); });
-        findViewById(R.id.btnDivideSci).setOnClickListener(v -> { rawInput += "/"; updateDisplayScientific(); });
-        findViewById(R.id.btnPower).setOnClickListener(v -> { rawInput += "^"; updateDisplayScientific(); });
-
-        findViewById(R.id.btnClearSci).setOnClickListener(v -> { rawInput = ""; updateDisplayScientific(); });
-        findViewById(R.id.btnDelSci).setOnClickListener(v -> {
-            if (!rawInput.isEmpty()) rawInput = rawInput.substring(0, rawInput.length() - 1);
-            updateDisplayScientific();
-        });
-        findViewById(R.id.btnPercentSci).setOnClickListener(v -> {
+        findViewById<View>(R.id.btnDotSci).setOnClickListener {
+            rawInput += "."
+            updateDisplayScientific()
+        }
+        findViewById<View>(R.id.btnPlusSci).setOnClickListener {
+            rawInput += "+"
+            updateDisplayScientific()
+        }
+        findViewById<View>(R.id.btnMinusSci).setOnClickListener {
+            rawInput += "-"
+            updateDisplayScientific()
+        }
+        findViewById<View>(R.id.btnMultiplySci).setOnClickListener {
+            rawInput += "*"
+            updateDisplayScientific()
+        }
+        findViewById<View>(R.id.btnDivideSci).setOnClickListener {
+            rawInput += "/"
+            updateDisplayScientific()
+        }
+        findViewById<View>(R.id.btnPower).setOnClickListener {
+            rawInput += "^"
+            updateDisplayScientific()
+        }
+        findViewById<View>(R.id.btnClearSci).setOnClickListener {
+            rawInput = ""
+            updateDisplayScientific()
+        }
+        findViewById<View>(R.id.btnDelSci).setOnClickListener {
+            if (rawInput.isNotEmpty()) rawInput = rawInput.substring(0, rawInput.length - 1)
+            updateDisplayScientific()
+        }
+        findViewById<View>(R.id.btnPercentSci).setOnClickListener {
             try {
-                double val = Double.parseDouble(rawInput);
-                rawInput = formatResult(val / 100.0);
-            } catch (Exception ignored) { }
-            updateDisplayScientific();
-        });
-        findViewById(R.id.btnEqualsSci).setOnClickListener(v -> onEquals());
-
-        findViewById(R.id.btnLeftParen).setOnClickListener(v -> { rawInput += "("; updateDisplayScientific(); });
-        findViewById(R.id.btnRightParen).setOnClickListener(v -> { rawInput += ")"; updateDisplayScientific(); });
-        findViewById(R.id.btnPi).setOnClickListener(v -> {
-            rawInput += Math.PI;
-            updateDisplayScientific();
-        });
-        findViewById(R.id.btnSin).setOnClickListener(v -> {
-            try { rawInput = formatResult(Math.sin(Double.parseDouble(rawInput))); } catch (Exception ignored) {}
-            updateDisplayScientific();
-        });
-        findViewById(R.id.btnCos).setOnClickListener(v -> {
-            try { rawInput = formatResult(Math.cos(Double.parseDouble(rawInput))); } catch (Exception ignored) {}
-            updateDisplayScientific();
-        });
-        findViewById(R.id.btnTan).setOnClickListener(v -> {
-            try { rawInput = formatResult(Math.tan(Double.parseDouble(rawInput))); } catch (Exception ignored) {}
-            updateDisplayScientific();
-        });
-        findViewById(R.id.btnLog).setOnClickListener(v -> {
-            try { rawInput = formatResult(Math.log10(Double.parseDouble(rawInput))); } catch (Exception ignored) {}
-            updateDisplayScientific();
-        });
-        findViewById(R.id.btnLn).setOnClickListener(v -> {
-            try { rawInput = formatResult(Math.log(Double.parseDouble(rawInput))); } catch (Exception ignored) {}
-            updateDisplayScientific();
-        });
-        findViewById(R.id.btnSqrt).setOnClickListener(v -> {
-            try { rawInput = formatResult(Math.sqrt(Double.parseDouble(rawInput))); } catch (Exception ignored) {}
-            updateDisplayScientific();
-        });
+                val v = rawInput.toDouble()
+                rawInput = formatResult(v / 100.0)
+            } catch (ignored: Exception) {
+            }
+            updateDisplayScientific()
+        }
+        findViewById<View>(R.id.btnEqualsSci).setOnClickListener { onEquals() }
+        findViewById<View>(R.id.btnLeftParen).setOnClickListener {
+            rawInput += "("
+            updateDisplayScientific()
+        }
+        findViewById<View>(R.id.btnRightParen).setOnClickListener {
+            rawInput += ")"
+            updateDisplayScientific()
+        }
+        findViewById<View>(R.id.btnPi).setOnClickListener {
+            rawInput += Math.PI.toString()
+            updateDisplayScientific()
+        }
+        findViewById<View>(R.id.btnSin).setOnClickListener {
+            try {
+                rawInput = formatResult(Math.sin(rawInput.toDouble()))
+            } catch (ignored: Exception) {
+            }
+            updateDisplayScientific()
+        }
+        findViewById<View>(R.id.btnCos).setOnClickListener {
+            try {
+                rawInput = formatResult(Math.cos(rawInput.toDouble()))
+            } catch (ignored: Exception) {
+            }
+            updateDisplayScientific()
+        }
+        findViewById<View>(R.id.btnTan).setOnClickListener {
+            try {
+                rawInput = formatResult(Math.tan(rawInput.toDouble()))
+            } catch (ignored: Exception) {
+            }
+            updateDisplayScientific()
+        }
+        findViewById<View>(R.id.btnLog).setOnClickListener {
+            try {
+                rawInput = formatResult(Math.log10(rawInput.toDouble()))
+            } catch (ignored: Exception) {
+            }
+            updateDisplayScientific()
+        }
+        findViewById<View>(R.id.btnLn).setOnClickListener {
+            try {
+                rawInput = formatResult(Math.log(rawInput.toDouble()))
+            } catch (ignored: Exception) {
+            }
+            updateDisplayScientific()
+        }
+        findViewById<View>(R.id.btnSqrt).setOnClickListener {
+            try {
+                rawInput = formatResult(Math.sqrt(rawInput.toDouble()))
+            } catch (ignored: Exception) {
+            }
+            updateDisplayScientific()
+        }
     }
 
-    private void onEquals() {
-        String input = rawInput.trim();
-        if (input.equals(SECRET_CODE)) {
-            openMainApp();
-            return;
-        }
-        // Kode rahasia
-        if (input.equals("000")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            startActivity(new Intent(this, SecretCodesActivity.class)); return; }
-        if (input.equals("111")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            startActivity(new Intent(this, CrashHistoryActivity.class)); return; }
-        if (input.equals("222")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            startActivity(new Intent(this, ChangelogActivity.class)); return; }
-        if (input.equals("808")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            startActivity(new Intent(this, DownloadListActivity.class)); return; }
-        if (input.equals("888")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            startActivity(new Intent(this, StatistikActivity.class)); return; }
-        if (input.equals("102")) {
-            rawInput = "";
-            throw new RuntimeException("Force Crash — User triggered via secret code 102");
-        }
-        if (input.equals("103")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            TestGestureHelper.showGuide(this); return; }
-        if (input.equals("104")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            TestModesHelper.showChoice(this); return; }
-        if (input.equals("101")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            DeveloperModeStore.toggle(this); return; }
-        if (input.equals("123")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            CacheResetter.confirmAndReset(this); return; }
-        if (input.equals("456")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            RepairDatabaseHelper.confirmAndRepair(this); return; }
-        if (input.equals("444")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            TestMediaHelper.showChoice(this); return; }
-        if (input.equals("789")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            FactoryResetHelper.confirmAndReset(this); return; }
-        if (input.equals("777")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            startActivity(new Intent(this, StorageAnalyzerActivity.class)); return; }
-        if (input.equals("999")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            ProjectExportHelper.export(this); return; }
-        if (input.equals("333")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            startActivity(new Intent(this, SystemInfoActivity.class)); return; }
-        if (input.equals("555")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            startActivity(new Intent(this, NetworkInfoActivity.class)); return; }
-        if (input.equals("666")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            startActivity(new Intent(this, PermissionInfoActivity.class)); return; }
-        if (input.equals("200")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-            intent.setData(android.net.Uri.parse("package:" + getPackageName()));
-            startActivity(intent); return; }
-        if (input.equals("201")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            try {
-                Intent intent = new Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
-                startActivity(intent);
-            } catch (Exception e) {
-                android.widget.Toast.makeText(this, "Tidak didukung di HP ini", android.widget.Toast.LENGTH_SHORT).show();
+    private fun onEquals() {
+        val input = rawInput.trim()
+        when (input) {
+            SECRET_CODE -> {
+                openMainApp()
+                return
             }
-            return; }
-        if (input.equals("8889")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            testJsHttp(); return; }
-
-        if (input.equals("8888")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            testJsRhino(); return; }
-
-        if (input.equals("202")) { rawInput = ""; updateDisplay(); updateDisplayScientific();
-            try {
-                Intent intent = new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS);
-                intent.putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, getPackageName());
-                startActivity(intent);
-            } catch (Exception e) {
-                android.widget.Toast.makeText(this, "Tidak didukung di HP ini", android.widget.Toast.LENGTH_SHORT).show();
+            "000" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                startActivity(Intent(this, SecretCodesActivity::class.java))
+                return
             }
-            return; }
+            "111" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                startActivity(Intent(this, CrashHistoryActivity::class.java))
+                return
+            }
+            "222" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                startActivity(Intent(this, ChangelogActivity::class.java))
+                return
+            }
+            "808" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                startActivity(Intent(this, DownloadListActivity::class.java))
+                return
+            }
+            "888" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                startActivity(Intent(this, StatistikActivity::class.java))
+                return
+            }
+            "102" -> {
+                rawInput = ""
+                throw RuntimeException("Force Crash - User triggered via secret code 102")
+            }
+            "103" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                TestGestureHelper.showGuide(this)
+                return
+            }
+            "104" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                TestModesHelper.showChoice(this)
+                return
+            }
+            "101" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                DeveloperModeStore.toggle(this)
+                return
+            }
+            "123" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                CacheResetter.confirmAndReset(this)
+                return
+            }
+            "456" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                RepairDatabaseHelper.confirmAndRepair(this)
+                return
+            }
+            "444" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                TestMediaHelper.showChoice(this)
+                return
+            }
+            "789" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                FactoryResetHelper.confirmAndReset(this)
+                return
+            }
+            "777" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                startActivity(Intent(this, StorageAnalyzerActivity::class.java))
+                return
+            }
+            "999" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                ProjectExportHelper.export(this)
+                return
+            }
+            "333" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                startActivity(Intent(this, SystemInfoActivity::class.java))
+                return
+            }
+            "555" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                startActivity(Intent(this, NetworkInfoActivity::class.java))
+                return
+            }
+            "666" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                startActivity(Intent(this, PermissionInfoActivity::class.java))
+                return
+            }
+            "200" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                intent.data = Uri.parse("package:$packageName")
+                startActivity(intent)
+                return
+            }
+            "201" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                try {
+                    val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Tidak didukung di HP ini", Toast.LENGTH_SHORT).show()
+                }
+                return
+            }
+            "8889" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                testJsHttp()
+                return
+            }
+            "8888" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                testJsRhino()
+                return
+            }
+            "202" -> {
+                rawInput = ""
+                updateDisplay()
+                updateDisplayScientific()
+                try {
+                    val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    intent.putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Tidak didukung di HP ini", Toast.LENGTH_SHORT).show()
+                }
+                return
+            }
+        }
+
         try {
-            double result = evaluate(rawInput);
-            String resultStr = formatResult(result);
-            rawInput = resultStr;
-            updateDisplay();
-            updateDisplayScientific();
-        } catch (Exception e) {
-            rawInput = "";
-            if (tvDisplay != null) tvDisplay.setText("Error");
-            if (tvDisplayScientific != null) tvDisplayScientific.setText("Error");
+            val result = evaluate(rawInput)
+            val resultStr = formatResult(result)
+            rawInput = resultStr
+            updateDisplay()
+            updateDisplayScientific()
+        } catch (e: Exception) {
+            rawInput = ""
+            tvDisplay?.text = "Error"
+            tvDisplayScientific?.text = "Error"
         }
     }
 
-    private void openMainApp() {
-        rawInput = "";
-        updateDisplay();
-        updateDisplayScientific();
-
-        // Tandai bahwa auth sudah sukses (biar tidak loop)
-        try { SessionManager.markAuthPassed(); } catch (Exception ignored) {}
-
-        // Cek apakah ada activity terakhir yang perlu di-restore
+    private fun openMainApp() {
+        rawInput = ""
+        updateDisplay()
+        updateDisplayScientific()
         try {
-            String lastClass = SessionState.lastActivityClass;
+            SessionManager.markAuthPassed()
+        } catch (ignored: Exception) {
+        }
+        try {
+            val lastClass = SessionState.lastActivityClass
             if (lastClass != null && lastClass.contains("VideoPlayerActivity")) {
-                Intent intent = new Intent(this, VideoPlayerActivity.class);
-                intent.putExtra("index", SessionState.lastVideoIndex);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                SessionState.clear();
-                startActivity(intent);
-                return;
+                val intent = Intent(this, VideoPlayerActivity::class.java)
+                intent.putExtra("index", SessionState.lastVideoIndex)
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                SessionState.clear()
+                startActivity(intent)
+                return
             }
-        } catch (Exception ignored) {}
-
-        SessionState.clear();
-        Intent intent = new Intent(this, MainActivity.class);
-        startActivity(intent);
+        } catch (ignored: Exception) {
+        }
+        SessionState.clear()
+        val intent = Intent(this, MainActivity::class.java)
+        startActivity(intent)
     }
 
-    private void updateDisplay() {
-        if (tvDisplay != null) {
-            tvDisplay.setText(rawInput.isEmpty() ? "0" : rawInput);
+    private fun updateDisplay() {
+        tvDisplay?.text = if (rawInput.isEmpty()) "0" else rawInput
+    }
+
+    private fun updateDisplayScientific() {
+        tvDisplayScientific?.text = if (rawInput.isEmpty()) "0" else rawInput
+    }
+
+    private fun formatResult(value: Double): String {
+        return if (value == Math.floor(value) && !value.isInfinite()) {
+            value.toLong().toString()
+        } else {
+            value.toString()
         }
     }
 
-    private void updateDisplayScientific() {
-        if (tvDisplayScientific != null) {
-            tvDisplayScientific.setText(rawInput.isEmpty() ? "0" : rawInput);
-        }
+    private fun evaluate(expr: String): Double {
+        return ExprParser(expr).parse()
     }
 
-    private String formatResult(double val) {
-        if (val == Math.floor(val) && !Double.isInfinite(val)) {
-            return String.valueOf((long) val);
-        }
-        return String.valueOf(val);
-    }
+    private class ExprParser(private val s: String) {
+        private var pos = 0
 
-    private double evaluate(String expr) {
-        return new ExprParser(expr).parse();
-    }
-
-    private static class ExprParser {
-        private final String s;
-        private int pos = 0;
-
-        ExprParser(String s) { this.s = s; }
-
-        double parse() {
-            double result = parseTerm();
-            while (pos < s.length()) {
-                char c = s.charAt(pos);
-                if (c == '+') { pos++; result += parseTerm(); }
-                else if (c == '-') { pos++; result -= parseTerm(); }
-                else break;
+        fun parse(): Double {
+            var result = parseTerm()
+            while (pos < s.length) {
+                val c = s[pos]
+                if (c == '+') {
+                    pos++
+                    result += parseTerm()
+                } else if (c == '-') {
+                    pos++
+                    result -= parseTerm()
+                } else {
+                    break
+                }
             }
-            return result;
+            return result
         }
 
-        double parseTerm() {
-            double result = parsePower();
-            while (pos < s.length()) {
-                char c = s.charAt(pos);
-                if (c == '*') { pos++; result *= parsePower(); }
-                else if (c == '/') { pos++; result /= parsePower(); }
-                else break;
+        private fun parseTerm(): Double {
+            var result = parsePower()
+            while (pos < s.length) {
+                val c = s[pos]
+                if (c == '*') {
+                    pos++
+                    result *= parsePower()
+                } else if (c == '/') {
+                    pos++
+                    result /= parsePower()
+                } else {
+                    break
+                }
             }
-            return result;
+            return result
         }
 
-        double parsePower() {
-            double result = parseFactor();
-            while (pos < s.length()) {
-                char c = s.charAt(pos);
-                if (c == '^') { pos++; result = Math.pow(result, parseFactor()); }
-                else break;
+        private fun parsePower(): Double {
+            var result = parseFactor()
+            while (pos < s.length) {
+                val c = s[pos]
+                if (c == '^') {
+                    pos++
+                    result = Math.pow(result, parseFactor())
+                } else {
+                    break
+                }
             }
-            return result;
+            return result
         }
 
-        double parseFactor() {
-            int start = pos;
-            if (pos < s.length() && s.charAt(pos) == '-') { pos++; return -parseFactor(); }
-            while (pos < s.length() && (Character.isDigit(s.charAt(pos)) || s.charAt(pos) == '.')) { pos++; }
-            if (start == pos) throw new RuntimeException("Invalid expression");
-            return Double.parseDouble(s.substring(start, pos));
+        private fun parseFactor(): Double {
+            val start = pos
+            if (pos < s.length && s[pos] == '-') {
+                pos++
+                return -parseFactor()
+            }
+            while (pos < s.length && (Character.isDigit(s[pos]) || s[pos] == '.')) {
+                pos++
+            }
+            if (start == pos) throw RuntimeException("Invalid expression")
+            return s.substring(start, pos).toDouble()
         }
     }
 }
