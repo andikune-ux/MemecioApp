@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_glass_card"
+    android:padding="12dp"
+    android:layout_marginBottom="6dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/tvFeatureName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Nama Fitur"
+            android:textSize="13sp"
+            android:textColor="#1C1C1E" />
+
+        <TextView
+            android:id="@+id/tvFeatureStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Selesai"
+            android:textSize="10sp"
+            android:textColor="#FFFFFF"
+            android:background="#4CAF50"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvFeatureDate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="12 Sep 2026"
+        android:textSize="10sp"
+        android:textColor="#999999"
+        android:layout_marginTop="3dp" />
+</LinearLayout>

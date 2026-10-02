@@ -1,0 +1,299 @@
+package com.memecio.app;
+
+import android.app.Activity;
+import android.app.PictureInPictureParams;
+import android.media.AudioManager;
+import android.media.PlaybackParams;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.util.Rational;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.PopupMenu;
+import android.widget.SeekBar;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.VideoView;
+
+import java.util.ArrayList;
+import java.util.Locale;
+
+public class VideoPlayerActivity extends Activity {
+
+    private VideoView videoView;
+    private SeekBar seekBar;
+    private TextView tvTimecode, tvSpeed, btnPlayPause, btnPlayPauseCenter, btnMute;
+    private View controlBar, centerControls, btnCloseVideo, topBar;
+    private Handler handler = new Handler();
+    private Handler hideHandler = new Handler();
+    private boolean isPlaying = true;
+    private boolean isMuted = false;
+    private boolean controlsVisible = true;
+    private float currentSpeed = 1.0f;
+    private AudioManager audioManager;
+
+    private ArrayList<String> playlist;
+    private int currentIndex = 0;
+
+    private Runnable updateSeekRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (videoView != null && videoView.isPlaying()) {
+                int current = videoView.getCurrentPosition();
+                int duration = videoView.getDuration();
+                seekBar.setMax(duration);
+                seekBar.setProgress(current);
+                tvTimecode.setText(formatTime(current) + " / " + formatTime(duration));
+            }
+            handler.postDelayed(this, 500);
+        }
+    };
+
+    private Runnable hideControlsRunnable = new Runnable() {
+        @Override
+        public void run() {
+            hideControls();
+        }
+    };
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        setContentView(R.layout.activity_video_player);
+
+        audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+
+        videoView = findViewById(R.id.videoView);
+        seekBar = findViewById(R.id.seekBar);
+        tvTimecode = findViewById(R.id.tvTimecode);
+        tvSpeed = findViewById(R.id.tvSpeed);
+        btnPlayPause = findViewById(R.id.btnPlayPause);
+        btnPlayPauseCenter = findViewById(R.id.btnPlayPauseCenter);
+        btnMute = findViewById(R.id.btnMute);
+        btnCloseVideo = findViewById(R.id.btnCloseVideo);
+        controlBar = findViewById(R.id.controlBar);
+        centerControls = findViewById(R.id.centerControls);
+        topBar = findViewById(R.id.topBar);
+        View btnPip = findViewById(R.id.btnPip);
+        View btnRewind = findViewById(R.id.btnRewind);
+        View btnForward = findViewById(R.id.btnForward);
+        View btnPrevious = findViewById(R.id.btnPrevious);
+        View btnNext = findViewById(R.id.btnNext);
+        View btnSubtitle = findViewById(R.id.btnSubtitle);
+        View btnSettings = findViewById(R.id.btnSettings);
+        View btnCast = findViewById(R.id.btnCast);
+
+        playlist = getIntent().getStringArrayListExtra("playlist");
+        currentIndex = getIntent().getIntExtra("index", 0);
+
+        if (playlist == null || playlist.isEmpty()) {
+            playlist = new ArrayList<>();
+            String single = getIntent().getStringExtra("uri");
+            if (single != null) playlist.add(single);
+            currentIndex = 0;
+        }
+
+        loadVideo(currentIndex);
+        scheduleAutoHide();
+
+        View.OnTouchListener rootTouchListener = new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, android.view.MotionEvent event) {
+                if (event.getAction() == android.view.MotionEvent.ACTION_DOWN) {
+                    toggleControls();
+                }
+                return false;
+            }
+        };
+        videoView.setOnTouchListener(rootTouchListener);
+
+        btnCloseVideo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) { finish(); }
+        });
+
+        btnPip.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) { enterPip(); }
+        });
+
+        View.OnClickListener togglePlay = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isPlaying) {
+                    videoView.pause();
+                    btnPlayPause.setText("\u25B6");
+                    btnPlayPauseCenter.setText("\u25B6");
+                } else {
+                    videoView.start();
+                    btnPlayPause.setText("\u23F8");
+                    btnPlayPauseCenter.setText("\u23F8");
+                }
+                isPlaying = !isPlaying;
+                scheduleAutoHide();
+            }
+        };
+        btnPlayPause.setOnClickListener(togglePlay);
+        btnPlayPauseCenter.setOnClickListener(togglePlay);
+
+        btnRewind.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int pos = videoView.getCurrentPosition() - 10000;
+                videoView.seekTo(Math.max(pos, 0));
+                scheduleAutoHide();
+            }
+        });
+
+        btnForward.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int pos = videoView.getCurrentPosition() + 10000;
+                videoView.seekTo(Math.min(pos, videoView.getDuration()));
+                scheduleAutoHide();
+            }
+        });
+
+        btnPrevious.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (currentIndex > 0) {
+                    currentIndex--;
+                    loadVideo(currentIndex);
+                } else {
+                    Toast.makeText(VideoPlayerActivity.this, "Ini video pertama", Toast.LENGTH_SHORT).show();
+                }
+                scheduleAutoHide();
+            }
+        });
+
+        btnNext.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (currentIndex < playlist.size() - 1) {
+                    currentIndex++;
+                    loadVideo(currentIndex);
+                } else {
+                    Toast.makeText(VideoPlayerActivity.this, "Ini video terakhir", Toast.LENGTH_SHORT).show();
+                }
+                scheduleAutoHide();
+            }
+        });
+
+        btnMute.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isMuted) {
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC,
+                            audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) / 2, 0);
+                    btnMute.setText("\uD83D\uDD0A");
+                } else {
+                    audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0);
+                    btnMute.setText("\uD83D\uDD07");
+                }
+                isMuted = !isMuted;
+                scheduleAutoHide();
+            }
+        });
+
+        btnSubtitle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(VideoPlayerActivity.this, "Subtitle belum tersedia untuk video ini", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        btnCast.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(VideoPlayerActivity.this, "Cast - fitur segera hadir", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        btnSettings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showSpeedMenu(v);
+                scheduleAutoHide();
+            }
+        });
+
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) videoView.seekTo(progress);
+            }
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) { scheduleAutoHide(); }
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) { scheduleAutoHide(); }
+        });
+    }
+
+    private void toggleControls() {
+        if (controlsVisible) {
+            hideControls();
+        } else {
+            showControls();
+            scheduleAutoHide();
+        }
+    }
+
+    private void showControls() {
+        controlsVisible = true;
+        controlBar.setVisibility(View.VISIBLE);
+        centerControls.setVisibility(View.VISIBLE);
+        btnCloseVideo.setVisibility(View.VISIBLE);
+        if (topBar != null) topBar.setVisibility(View.VISIBLE);
+    }
+
+    private void hideControls() {
+        controlsVisible = false;
+        controlBar.setVisibility(View.GONE);
+        centerControls.setVisibility(View.GONE);
+        btnCloseVideo.setVisibility(View.GONE);
+        if (topBar != null) topBar.setVisibility(View.GONE);
+    }
+
+    private void scheduleAutoHide() {
+        hideHandler.removeCallbacks(hideControlsRunnable);
+        hideHandler.postDelayed(hideControlsRunnable, 4000);
+    }
+
+    private void loadVideo(int index) {
+        try {
+            if (index < 0 || index >= playlist.size()) return;
+            Uri uri = Uri.parse(playlist.get(index));
+            videoView.setVideoURI(uri);
+            videoView.setOnPreparedListener(new android.media.MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(android.media.MediaPlayer mp) {
+                    mp.setLooping(false);
+                    videoView.start();
+                    isPlaying = true;
+                    btnPlayPause.setText("\u23F8");
+                    btnPlayPauseCenter.setText("\u23F8");
+                    seekBar.setMax(videoView.getDuration());
+                    applySpeed();
+                    handler.post(updateSeekRunnable);
+                }
+            });
+            videoView.setOnErrorListener(new android.media.MediaPlayer.OnErrorListener() {
+                @Override
+                public boolean onError(android.media.MediaPlayer mp, int what, int extra) {
+                    Toast.makeText(VideoPlayerActivity.this, "Gagal memutar video", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+            });
+        } catch (Exception e) {
+            Toast.makeText(VideoPlayerActivity.this, "Gagal memuat video: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            if (index < playlist.size() - 1) {
+                loadVideo(index + 1);
+            } else {
+                finish();
+            }
+        }
+    }

@@ -1,0 +1,172 @@
+package com.memecio.app.plugin;
+
+import android.content.Context;
+import android.util.Log;
+
+import com.lagradost.cloudstream3.MainAPI;
+import com.memecio.app.plugin.model.PluginLink;
+import com.memecio.app.plugin.model.PluginMediaItem;
+import com.memecio.app.plugin.model.PluginSearchResult;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Adapter: MainAPI CloudStream -> MemecioProvider.
+ * C-2b-2: panggil search() via CoroutineHelper.
+ */
+public class CloudStreamProviderAdapter extends MemecioProvider {
+
+    private static final String TAG = "CSProviderAdapter";
+    private static String lastError = null;
+
+    public static String getLastError() { return lastError; }
+    public static void clearLastError() { lastError = null; }
+
+    private final com.lagradost.cloudstream3.plugins.Plugin csPlugin;
+    private final PluginDescriptor descriptor;
+    private MainAPI mainApi;
+
+    public CloudStreamProviderAdapter(com.lagradost.cloudstream3.plugins.Plugin csPlugin,
+                                       PluginDescriptor descriptor) {
+        this.csPlugin = csPlugin;
+        this.descriptor = descriptor;
+        try {
+            this.mainApi = csPlugin.getMainPlugin();
+            Log.d(TAG, "MainAPI: " + (mainApi != null ? mainApi.getClass().getName() : "null"));
+        } catch (Throwable t) {
+            Log.e(TAG, "GetMainPlugin error", t);
+            lastError = "GetMainPlugin: " + t;
+            this.mainApi = null;
+        }
+    }
+
+    @Override
+    public void onInit(Context context) {
+        super.onInit(context);
+        try {
+            if (csPlugin != null) csPlugin.load(context);
+        } catch (Throwable t) {
+            Log.e(TAG, "Plugin.load error", t);
+            lastError = "Plugin.load: " + t;
+        }
+    }
+
+    @Override
+    public List<PluginSearchResult> search(String query) {
+        lastError = null;
+        List<PluginSearchResult> out = new ArrayList<>();
+
+        if (mainApi == null) {
+            lastError = "MainAPI null - plugin tidak punya provider";
+            return out;
+        }
+
+        Log.d(TAG, "search(): " + query);
+        CoroutineHelper.Result r = CoroutineHelper.callSuspend(mainApi, "search", query);
+
+        if (!r.success) {
+            lastError = formatError(r.error);
+            Log.e(TAG, "search failed: " + lastError, r.error);
+            return out;
+        }
+
+        Object data = r.data;
+        Log.d(TAG, "search data class: " + (data == null ? "null" : data.getClass().getName()));
+
+        if (data == null) { lastError = "Hasil null dari plugin"; return out; }
+        if (!(data instanceof List)) {
+            lastError = "Hasil bukan List: " + data.getClass().getName();
+            return out;
+        }
+
+        for (Object o : (List<?>) data) {
+            try {
+                if (o instanceof com.lagradost.cloudstream3.SearchResponse) {
+                    com.lagradost.cloudstream3.SearchResponse sr =
+                        (com.lagradost.cloudstream3.SearchResponse) o;
+                    PluginSearchResult psr = new PluginSearchResult();
+                    psr.title = sr.name;
+                    psr.url = sr.url;
+                    psr.id = sr.url;
+                    psr.posterUrl = sr.posterUrl;
+                    psr.year = sr.year != null ? sr.year : 0;
+                    out.add(psr);
+                } else {
+                    Log.w(TAG, "Item bukan SearchResponse: "
+                        + (o == null ? "null" : o.getClass().getName()));
+                }
+            } catch (Throwable t) {
+                Log.e(TAG, "Convert error", t);
+            }
+        }
+
+        Log.d(TAG, "search done: " + out.size() + " hasil");
+        return out;
+    }
+
+    @Override
+    public List<PluginMediaItem> getMainPage() {
+        lastError = null;
+        List<PluginMediaItem> out = new ArrayList<>();
+
+        if (mainApi == null) {
+            lastError = "MainAPI null";
+            return out;
+        }
+
+        CoroutineHelper.Result r = CoroutineHelper.callSuspend(mainApi, "getMainPage", 1, null);
+        if (!r.success) {
+            lastError = formatError(r.error);
+            Log.e(TAG, "getMainPage failed: " + lastError, r.error);
+            return out;
+        }
+
+        Object data = r.data;
+        if (data == null) return out;
+
+        if (data instanceof com.lagradost.cloudstream3.HomePageResponse) {
+            com.lagradost.cloudstream3.HomePageResponse hp =
+                (com.lagradost.cloudstream3.HomePageResponse) data;
+            if (hp.items != null) {
+                for (com.lagradost.cloudstream3.HomePageResponse.HomePageList row : hp.items) {
+                    if (row == null || row.list == null) continue;
+                    for (Object obj : row.list) {
+                        if (!(obj instanceof com.lagradost.cloudstream3.SearchResponse)) continue;
+                        com.lagradost.cloudstream3.SearchResponse sr =
+                            (com.lagradost.cloudstream3.SearchResponse) obj;
+                        PluginMediaItem pi = new PluginMediaItem();
+                        pi.title = sr.name;
+                        pi.url = sr.url;
+                        pi.id = sr.url;
+                        pi.posterUrl = sr.posterUrl;
+                        pi.year = sr.year != null ? sr.year : 0;
+                        out.add(pi);
+                    }
+                }
+            }
+        }
+
+        Log.d(TAG, "getMainPage done: " + out.size() + " item");
+        return out;
+    }
+
+    @Override
+    public List<PluginLink> loadLinks(PluginMediaItem item) {
+        // C-2b-3: implement nanti (butuh Function1 stub untuk subtitle + extractor callback)
+        return new ArrayList<>();
+    }
+
+    private static String formatError(Throwable t) {
+        if (t == null) return "unknown error";
+        StringBuilder sb = new StringBuilder();
+        sb.append(t.getClass().getSimpleName());
+        if (t.getMessage() != null) sb.append(": ").append(t.getMessage());
+        Throwable cause = t.getCause();
+        if (cause != null && cause != t) {
+            sb.append(" \u2192 ").append(cause.getClass().getSimpleName());
+            if (cause.getMessage() != null) sb.append(": ").append(cause.getMessage());
+        }
+        return sb.toString();
+    }
+}

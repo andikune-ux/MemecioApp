@@ -1,0 +1,106 @@
+package com.memecio.app;
+
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.memecio.app.plugin.model.PluginMediaItem;
+import com.memecio.app.plugin.model.PluginSearchResult;
+
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
+public class PluginItemAdapter extends BaseAdapter {
+
+    private final Context ctx;
+    private final List<Object> items = new ArrayList<>();
+    private final Handler ui = new Handler(Looper.getMainLooper());
+
+    public PluginItemAdapter(Context ctx) {
+        this.ctx = ctx;
+    }
+
+    public void setSearchResults(List<PluginSearchResult> list) {
+        items.clear();
+        if (list != null) items.addAll(list);
+        notifyDataSetChanged();
+    }
+
+    public void setMediaItems(List<PluginMediaItem> list) {
+        items.clear();
+        if (list != null) items.addAll(list);
+        notifyDataSetChanged();
+    }
+
+    @Override public int getCount() { return items.size(); }
+    @Override public Object getItem(int i) { return items.get(i); }
+    @Override public long getItemId(int i) { return i; }
+
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        if (convertView == null) {
+            convertView = LayoutInflater.from(ctx).inflate(R.layout.item_plugin_card, parent, false);
+        }
+        ImageView img = convertView.findViewById(R.id.imgPluginPoster);
+        TextView tvTitle = convertView.findViewById(R.id.tvPluginTitle);
+        TextView tvYear = convertView.findViewById(R.id.tvPluginYear);
+
+        Object obj = items.get(position);
+        String title = "";
+        String posterUrl = "";
+        int year = 0;
+
+        if (obj instanceof PluginSearchResult) {
+            PluginSearchResult r = (PluginSearchResult) obj;
+            title = r.title; posterUrl = r.posterUrl; year = r.year;
+        } else if (obj instanceof PluginMediaItem) {
+            PluginMediaItem m = (PluginMediaItem) obj;
+            title = m.title; posterUrl = m.posterUrl; year = m.year;
+        }
+
+        tvTitle.setText(title != null ? title : "Tanpa judul");
+        tvYear.setText(year > 0 ? String.valueOf(year) : "");
+        img.setImageResource(R.drawable.ic_plugin);
+
+        if (posterUrl != null && !posterUrl.isEmpty()) {
+            final String urlFinal = posterUrl;
+            final ImageView imgFinal = img;
+            new Thread(() -> {
+                final Bitmap bmp = loadBitmap(urlFinal);
+                if (bmp != null) ui.post(() -> imgFinal.setImageBitmap(bmp));
+            }).start();
+        }
+
+        return convertView;
+    }
+
+    private Bitmap loadBitmap(String url) {
+        HttpURLConnection conn = null;
+        try {
+            URL u = new URL(url);
+            conn = (HttpURLConnection) u.openConnection();
+            conn.setConnectTimeout(8000);
+            conn.setReadTimeout(8000);
+            conn.setRequestProperty("User-Agent", "MemecioApp/1.0");
+            InputStream in = conn.getInputStream();
+            Bitmap bmp = BitmapFactory.decodeStream(in);
+            in.close();
+            return bmp;
+        } catch (Exception e) {
+            return null;
+        } finally {
+            if (conn != null) try { conn.disconnect(); } catch (Exception ignored) {}
+        }
+    }
+}

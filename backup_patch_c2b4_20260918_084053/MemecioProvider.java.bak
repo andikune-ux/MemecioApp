@@ -1,0 +1,63 @@
+package com.memecio.app.plugin;
+
+import android.content.Context;
+import com.memecio.app.plugin.model.PluginLink;
+import com.memecio.app.plugin.model.PluginMediaItem;
+import com.memecio.app.plugin.model.PluginSearchResult;
+
+import java.util.List;
+
+/**
+ * ============================================================
+ * MEMECIO PROVIDER — ABSTRACT CLASS
+ * ============================================================
+ *
+ * Setiap plugin extends class ini dan implement 3 method wajib:
+ *   - search(query)       -> cari konten
+ *   - getMainPage()       -> konten beranda plugin
+ *   - loadLinks(item)     -> URL video
+ *
+ * Contoh:
+ *   public class AnichinProvider extends MemecioProvider {
+ *       public List<PluginSearchResult> search(String q) { ... }
+ *       public List<PluginMediaItem> getMainPage() { ... }
+ *       public List<PluginLink> loadLinks(PluginMediaItem item) { ... }
+ *   }
+ */
+public abstract class MemecioProvider {
+
+    protected Context context;
+
+    /** Dipanggil sekali saat plugin di-init. Bisa untuk setup HTTP client, dll. */
+    public void onInit(Context context) {
+        this.context = context;
+    }
+
+    // ---------- METHOD WAJIB (harus diimplement plugin) ----------
+
+    /** Cari konten berdasarkan query */
+    public abstract List<PluginSearchResult> search(String query);
+
+    /** Ambil konten untuk beranda plugin */
+    public abstract List<PluginMediaItem> getMainPage();
+
+    /** Ambil URL video dari item (biasanya setelah user tap film) */
+    public abstract List<PluginLink> loadLinks(PluginMediaItem item);
+
+    // ---------- METHOD OPSIONAL (ada default kosong) ----------
+
+    /** Ambil daftar episode (untuk series/anime) */
+    public List<PluginMediaItem> loadEpisodes(PluginMediaItem item) {
+        return null;
+    }
+
+    /** Ambil daftar genre yang didukung */
+    public List<String> getGenres() {
+        return null;
+    }
+
+    /** Dipanggil saat plugin di-unload. Bersihkan resource. */
+    public void onDestroy() {
+        this.context = null;
+    }
+}

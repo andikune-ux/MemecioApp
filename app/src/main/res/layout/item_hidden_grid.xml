@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="120dp"
+    android:layout_margin="2dp"
+    android:background="@drawable/bg_glass_card">
+
+    <ImageView
+        android:id="@+id/ivHiddenThumb"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:background="#333333" />
+
+    <ImageView
+        android:id="@+id/ivHiddenPlay"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="center"
+        android:src="@drawable/ic_play_w"
+        android:padding="8dp"
+        android:background="@drawable/bg_icon_transparent"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tvHiddenName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="#B0000000"
+        android:padding="4dp"
+        android:text="nama"
+        android:textColor="#FFFFFF"
+        android:textSize="10sp"
+        android:maxLines="1"
+        android:ellipsize="middle" />
+
+    <ImageView
+        android:id="@+id/ivCheckmark"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="4dp"
+        android:src="@drawable/ic_check_circle"
+        android:visibility="gone" />
+</FrameLayout>

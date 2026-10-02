@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='utf-8'?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/bg_cream">
+    <FrameLayout android:id="@+id/rightContentContainer" android:layout_width="match_parent" android:layout_height="match_parent">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="6dp">
+            <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:paddingStart="56dp" android:clipToPadding="false">
+                <LinearLayout android:id="@+id/emptyState" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:gravity="center" android:visibility="visible">
+                    <ImageView android:layout_width="56dp" android:layout_height="56dp" android:src="@drawable/ic_source" app:tint="@color/text_grey" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:text="Belum ada media" android:textSize="16sp" android:fontFamily="sans-serif-medium" android:textColor="@color/text_dark" />
+                </LinearLayout>
+                <GridView android:id="@+id/gridBeranda" android:layout_width="match_parent" android:layout_height="match_parent" android:numColumns="7" android:verticalSpacing="6dp" android:horizontalSpacing="6dp" android:visibility="gone" android:focusable="true" android:focusableInTouchMode="true" android:listSelector="@drawable/bg_grid_selector" android:drawSelectorOnTop="true" />
+                <ScrollView android:id="@+id/scrollKategori" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone" android:fillViewport="true">
+                    <LinearLayout android:id="@+id/kategoriList" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingBottom="20dp" />
+                </ScrollView>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_gravity="top" android:orientation="vertical">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingBottom="6dp">
+                        <EditText android:id="@+id/etSearch" android:layout_width="0dp" android:layout_height="38dp" android:layout_weight="1" android:hint="Cari..." android:textSize="13sp" android:background="@drawable/bg_search_transparent" android:paddingStart="14dp" android:paddingEnd="14dp" android:textColor="#3D5AFE" android:textColorHint="#803D5AFE" android:inputType="text" android:singleLine="true" android:focusable="true" />
+                        <ImageButton android:id="@+id/btnSearch" android:layout_width="38dp" android:layout_height="38dp" android:layout_marginStart="6dp" android:src="@drawable/ic_search_w" android:background="@drawable/bg_search_transparent" android:padding="8dp" android:scaleType="fitCenter" android:contentDescription="Cari" android:clickable="true" android:focusable="true" app:tint="#000000" />
+                    </LinearLayout>
+                    <HorizontalScrollView android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone">
+                        <LinearLayout android:id="@+id/historyChipsContainer" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" />
+                    </HorizontalScrollView>
+                    <HorizontalScrollView android:id="@+id/categoryChipScroll" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone">
+                        <LinearLayout android:id="@+id/categoryChipsContainer" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" />
+                    </HorizontalScrollView>
+                </LinearLayout>
+            </FrameLayout>
+        </LinearLayout>
+        <LinearLayout android:layout_width="40dp" android:layout_height="match_parent" android:orientation="vertical" android:paddingTop="60dp" android:paddingBottom="12dp" android:layout_gravity="start">
+            <ImageButton android:id="@+id/btnToggleSidebar" android:layout_width="match_parent" android:layout_height="36dp" android:src="@drawable/ic_playlist_w" android:background="@drawable/bg_filter_transparent" android:padding="8dp" android:scaleType="fitCenter" android:contentDescription="Playlist" android:clickable="true" android:focusable="true" />
+            <ImageButton android:id="@+id/btnFilterSemua" android:layout_width="match_parent" android:layout_height="36dp" android:layout_marginTop="4dp" android:src="@drawable/ic_grid_w" android:background="@drawable/bg_glass_button_selected" android:padding="8dp" android:scaleType="fitCenter" android:contentDescription="Semua" android:clickable="true" android:focusable="true" />
+            <ImageButton android:id="@+id/btnFilterFoto" android:layout_width="match_parent" android:layout_height="36dp" android:layout_marginTop="4dp" android:src="@drawable/ic_image_w" android:background="@drawable/bg_filter_transparent" android:padding="8dp" android:scaleType="fitCenter" android:contentDescription="Foto" android:clickable="true" android:focusable="true" />
+            <ImageButton android:id="@+id/btnFilterVideo" android:layout_width="match_parent" android:layout_height="36dp" android:layout_marginTop="4dp" android:src="@drawable/ic_video_w" android:background="@drawable/bg_filter_transparent" android:padding="8dp" android:scaleType="fitCenter" android:contentDescription="Video" android:clickable="true" android:focusable="true" />
+            <ImageButton android:id="@+id/btnSort" android:layout_width="match_parent" android:layout_height="36dp" android:layout_marginTop="4dp" android:src="@drawable/ic_sort_w" android:background="@drawable/bg_filter_transparent" android:padding="8dp" android:scaleType="fitCenter" android:contentDescription="Urutkan" android:clickable="true" android:focusable="true" />
+            <TextView android:id="@+id/tvSortLabel" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+        </LinearLayout>
+    </FrameLayout>
+    <LinearLayout android:id="@+id/sidebarContainer" android:layout_width="240dp" android:layout_height="match_parent" android:layout_gravity="start" android:orientation="vertical" android:background="@drawable/bg_glass_card" android:padding="10dp" android:visibility="gone" android:elevation="12dp">
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Daftar Playlist" android:textSize="13sp" android:fontFamily="sans-serif-medium" android:textColor="@color/text_dark" android:padding="8dp" />
+        <ListView android:id="@+id/sidebarSavedLinks" android:layout_width="match_parent" android:layout_height="match_parent" android:divider="@null" android:dividerHeight="8dp" android:focusable="true" android:focusableInTouchMode="true" android:listSelector="@drawable/bg_grid_selector" android:drawSelectorOnTop="true" />
+    </LinearLayout>
+    <TextView android:id="@+id/tvSidebarTitle" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+</FrameLayout>

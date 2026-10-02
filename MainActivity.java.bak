@@ -1,0 +1,705 @@
+package com.memecio.app;
+
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.provider.MediaStore;
+import android.util.DisplayMetrics;
+import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.GridView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+public class MainActivity extends Activity {
+
+    private static final int REQ_STORAGE_PERMISSION = 100;
+
+    private FrameLayout container;
+    private List<MediaItem> localMedia = new ArrayList<>();
+    private List<MediaItem> combinedMedia = new ArrayList<>();
+    private int currentFilter = 0;
+    private String activeSource = "offline";
+
+    private LinearLayout btnBeranda, btnSumber, btnProfil;
+    private ImageView_Compat unused;
+    private android.widget.ImageView tvIconBeranda;
+    private TextView tvLabelBeranda;
+    private android.widget.ImageView tvIconSumber;
+    private TextView tvLabelSumber;
+    private android.widget.ImageView tvIconProfil;
+    private TextView tvLabelProfil;
+
+    private ListView sidebarList;
+    private ArrayAdapter<MediaItem> sidebarAdapter;
+    private List<MediaItem> sidebarSavedItems = new ArrayList<>();
+    private LinearLayout sidebarContainer;
+    private boolean sidebarExpanded = false;
+
+    private Handler clockHandler = new Handler(Looper.getMainLooper());
+    private Runnable clockRunnable;
+
+    private static class ImageView_Compat {}
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        try {
+            doOnCreate(savedInstanceState);
+        } catch (Throwable t) {
+            showDebugCrashScreen(t);
+        }
+    }
+
+    private void showDebugCrashScreen(Throwable t) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        t.printStackTrace(pw);
+        String stackTrace = sw.toString();
+
+        android.widget.ScrollView scrollView = new android.widget.ScrollView(this);
+        scrollView.setBackgroundColor(0xFF000000);
+
+        TextView tv = new TextView(this);
+        tv.setText("=== ERROR SAAT MEMBUKA MEMEC.IO ===\n\n" + stackTrace);
+        tv.setTextColor(0xFF00FF00);
+        tv.setTextIsSelectable(true);
+        tv.setTextSize(12f);
+        tv.setPadding(24, 24, 24, 24);
+
+        scrollView.addView(tv);
+        setContentView(scrollView);
+    }
+
+    private void doOnCreate(Bundle savedInstanceState) {
+        String effectiveMode = DisplayModeStore.getEffectiveMode(this);
+        if (effectiveMode.equals("tv")) {
+            setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        } else {
+            setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+        }
+
+        setContentView(R.layout.activity_main);
+
+        container = findViewById(R.id.container);
+
+        btnBeranda = findViewById(R.id.btnBeranda);
+        btnSumber = findViewById(R.id.btnSumber);
+        btnProfil = findViewById(R.id.btnProfil);
+
+        tvIconBeranda = findViewById(R.id.tvIconBeranda);
+        tvLabelBeranda = findViewById(R.id.tvLabelBeranda);
+        tvIconSumber = findViewById(R.id.tvIconSumber);
+        tvLabelSumber = findViewById(R.id.tvLabelSumber);
+        tvIconProfil = findViewById(R.id.tvIconProfil);
+        tvLabelProfil = findViewById(R.id.tvLabelProfil);
+
+        btnBeranda.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                selectTab(0);
+                showContent(R.layout.content_beranda);
+                setupFilterTabs();
+                setupSidebar();
+                resolveActiveSourceAndLoad();
+            }
+        });
+
+        btnSumber.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                selectTab(1);
+                showContent(R.layout.content_sumber);
+                setupSumberButtons();
+            }
+        });
+
+        btnProfil.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                selectTab(2);
+                showContent(R.layout.content_profil);
+                setupProfilButtons();
+            }
+        });
+
+        selectTab(0);
+        showContent(R.layout.content_beranda);
+        setupFilterTabs();
+        setupSidebar();
+
+        handleIntentExtras(getIntent());
+
+        startClock();
+    }
+
+    private void handleIntentExtras(Intent intent) {
+        String playlistUrl = intent.getStringExtra("open_playlist_url");
+        String playlistTitle = intent.getStringExtra("open_playlist_title");
+        if (playlistUrl != null) {
+            MediaItem item = new MediaItem(Uri.parse(playlistUrl), MediaItem.TYPE_VIDEO);
+            item.title = playlistTitle;
+            loadPlaylist(item);
+        } else if (intent.getBooleanExtra("focus_source", false)) {
+            activeSource = ExternalMediaStore.getSourceLabel(this);
+            renderFromExternalOnly();
+        } else {
+            activeSource = "offline";
+            checkPermissionAndLoad();
+        }
+    }
+
+    private void startClock() {
+        final TextView tvHari = findViewById(R.id.tvHariTanggal);
+        final TextView tvJam = findViewById(R.id.tvJamRealtime);
+        if (tvHari == null || tvJam == null) return;
+
+        clockRunnable = new Runnable() {
+            @Override
+            public void run() {
+                java.util.Date now = new java.util.Date();
+                SimpleDateFormat fmtHari = new SimpleDateFormat("EEEE, dd MMM yyyy", new Locale("id", "ID"));
+                SimpleDateFormat fmtJam = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
+                tvHari.setText(fmtHari.format(now));
+                tvJam.setText(fmtJam.format(now));
+                clockHandler.postDelayed(this, 1000);
+            }
+        };
+        clockHandler.post(clockRunnable);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (clockRunnable != null) clockHandler.removeCallbacks(clockRunnable);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshSidebar();
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        selectTab(0);
+        showContent(R.layout.content_beranda);
+        setupFilterTabs();
+        setupSidebar();
+        handleIntentExtras(intent);
+    }
+
+    private void selectTab(int index) {
+        int unselected = getResources().getColor(R.color.nav_unselected);
+
+        tvIconBeranda.setColorFilter(index == 0 ? 0xFFFFFFFF : unselected);
+        tvLabelBeranda.setTextColor(index == 0 ? 0xFFFFFFFF : unselected);
+        tvIconSumber.setColorFilter(index == 1 ? 0xFFFFFFFF : unselected);
+        tvLabelSumber.setTextColor(index == 1 ? 0xFFFFFFFF : unselected);
+        tvIconProfil.setColorFilter(index == 2 ? 0xFFFFFFFF : unselected);
+        tvLabelProfil.setTextColor(index == 2 ? 0xFFFFFFFF : unselected);
+
+        btnBeranda.setBackgroundResource(index == 0 ? R.drawable.bg_glass_button_selected : 0);
+        btnSumber.setBackgroundResource(index == 1 ? R.drawable.bg_glass_button_selected : 0);
+        btnProfil.setBackgroundResource(index == 2 ? R.drawable.bg_glass_button_selected : 0);
+    }
+
+    private void showContent(int layoutRes) {
+        container.removeAllViews();
+        getLayoutInflater().inflate(layoutRes, container, true);
+    }
+
+    private void setupSumberButtons() {
+        Button btnOffline = container.findViewById(R.id.btnSumberOffline);
+        Button btnDrive = container.findViewById(R.id.btnSumberDrive);
+        Button btnStreaming = container.findViewById(R.id.btnSumberStreaming);
+        Button btnServer = container.findViewById(R.id.btnSumberServer);
+        Button btnRiwayat = container.findViewById(R.id.btnRiwayat);
+
+        if (btnOffline != null) {
+            btnOffline.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    activeSource = "offline";
+                    selectTab(0);
+                    showContent(R.layout.content_beranda);
+                    setupFilterTabs();
+                    setupSidebar();
+                    checkPermissionAndLoad();
+                }
+            });
+        }
+        if (btnDrive != null) {
+            btnDrive.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    startActivity(new Intent(MainActivity.this, DriveSourceActivity.class));
+                }
+            });
+        }
+        if (btnStreaming != null) {
+            btnStreaming.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    startActivity(new Intent(MainActivity.this, StreamingSourceActivity.class));
+                }
+            });
+        }
+        if (btnServer != null) {
+            btnServer.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(MainActivity.this, PinDialogActivity.class);
+                    intent.putExtra(PinDialogActivity.EXTRA_TARGET, PinDialogActivity.TARGET_SERVER);
+                    startActivity(intent);
+                }
+            });
+        }
+        if (btnRiwayat != null) {
+            btnRiwayat.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(MainActivity.this, PinDialogActivity.class);
+                    intent.putExtra(PinDialogActivity.EXTRA_TARGET, PinDialogActivity.TARGET_RIWAYAT);
+                    startActivity(intent);
+                }
+            });
+        }
+    }
+
+    private void resolveActiveSourceAndLoad() {
+        if ("offline".equals(activeSource)) {
+            checkPermissionAndLoad();
+        } else {
+            renderFromExternalOnly();
+        }
+    }
+
+    private void renderFromExternalOnly() {
+        combinedMedia.clear();
+        combinedMedia.addAll(ExternalMediaStore.getAll(this));
+        renderBeranda();
+        refreshSidebar();
+    }
+
+    private void checkPermissionAndLoad() {
+        String[] perms;
+        if (Build.VERSION.SDK_INT >= 33) {
+            perms = new String[]{"android.permission.READ_MEDIA_IMAGES", "android.permission.READ_MEDIA_VIDEO"};
+        } else {
+            perms = new String[]{"android.permission.READ_EXTERNAL_STORAGE"};
+        }
+
+        boolean allGranted = true;
+        for (String p : perms) {
+            if (checkSelfPermission(p) != PackageManager.PERMISSION_GRANTED) {
+                allGranted = false;
+                break;
+            }
+        }
+
+        if (!allGranted) {
+            requestPermissions(perms, REQ_STORAGE_PERMISSION);
+        } else {
+            loadOfflineMedia();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_STORAGE_PERMISSION) {
+            boolean granted = grantResults.length > 0;
+            for (int r : grantResults) {
+                if (r != PackageManager.PERMISSION_GRANTED) granted = false;
+            }
+            if (granted) {
+                loadOfflineMedia();
+            } else {
+                Toast.makeText(this, "Izin penyimpanan ditolak", Toast.LENGTH_SHORT).show();
+                renderBeranda();
+            }
+        }
+    }
+
+    private void loadOfflineMedia() {
+        localMedia.clear();
+
+        Cursor imgCursor = getContentResolver().query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                new String[]{MediaStore.Images.Media._ID},
+                null, null,
+                MediaStore.Images.Media.DATE_ADDED + " DESC");
+        if (imgCursor != null) {
+            while (imgCursor.moveToNext()) {
+                long id = imgCursor.getLong(0);
+                Uri uri = Uri.withAppendedPath(
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI, String.valueOf(id));
+                MediaItem item = new MediaItem(uri, MediaItem.TYPE_IMAGE);
+                item.isLocal = true;
+                localMedia.add(item);
+            }
+            imgCursor.close();
+        }
+
+        Cursor vidCursor = getContentResolver().query(
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                new String[]{MediaStore.Video.Media._ID},
+                null, null,
+                MediaStore.Video.Media.DATE_ADDED + " DESC");
+        if (vidCursor != null) {
+            while (vidCursor.moveToNext()) {
+                long id = vidCursor.getLong(0);
+                Uri uri = Uri.withAppendedPath(
+                        MediaStore.Video.Media.EXTERNAL_CONTENT_URI, String.valueOf(id));
+                MediaItem item = new MediaItem(uri, MediaItem.TYPE_VIDEO);
+                item.isLocal = true;
+                localMedia.add(item);
+            }
+            vidCursor.close();
+        }
+
+        combinedMedia.clear();
+        combinedMedia.addAll(localMedia);
+        renderBeranda();
+        refreshSidebar();
+    }
+
+    private void setupFilterTabs() {
+        final TextView btnSemua = container.findViewById(R.id.btnFilterSemua);
+        final TextView btnFoto = container.findViewById(R.id.btnFilterFoto);
+        final TextView btnVideo = container.findViewById(R.id.btnFilterVideo);
+
+        if (btnSemua == null) return;
+
+        btnSemua.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                currentFilter = 0;
+                updateFilterTabsUI();
+                renderBeranda();
+            }
+        });
+        btnFoto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                currentFilter = 1;
+                updateFilterTabsUI();
+                renderBeranda();
+            }
+        });
+        btnVideo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                currentFilter = 2;
+                updateFilterTabsUI();
+                renderBeranda();
+            }
+        });
+
+        updateFilterTabsUI();
+    }
+
+    private void updateFilterTabsUI() {
+        TextView btnSemua = container.findViewById(R.id.btnFilterSemua);
+        TextView btnFoto = container.findViewById(R.id.btnFilterFoto);
+        TextView btnVideo = container.findViewById(R.id.btnFilterVideo);
+        if (btnSemua == null) return;
+
+        btnSemua.setBackgroundResource(currentFilter == 0 ? R.drawable.bg_glass_button_selected : R.drawable.bg_glass_button);
+        btnSemua.setTextColor(currentFilter == 0 ? 0xFFFFFFFF : getResources().getColor(R.color.text_dark));
+
+        btnFoto.setBackgroundResource(currentFilter == 1 ? R.drawable.bg_glass_button_selected : R.drawable.bg_glass_button);
+        btnFoto.setTextColor(currentFilter == 1 ? 0xFFFFFFFF : getResources().getColor(R.color.text_dark));
+
+        btnVideo.setBackgroundResource(currentFilter == 2 ? R.drawable.bg_glass_button_selected : R.drawable.bg_glass_button);
+        btnVideo.setTextColor(currentFilter == 2 ? 0xFFFFFFFF : getResources().getColor(R.color.text_dark));
+    }
+
+    private void setupSidebar() {
+        sidebarContainer = container.findViewById(R.id.sidebarContainer);
+        sidebarList = container.findViewById(R.id.sidebarSavedLinks);
+        View rightContentContainer = container.findViewById(R.id.rightContentContainer);
+        if (sidebarList == null) return;
+
+        sidebarExpanded = false;
+        applySidebarWidth();
+
+        sidebarAdapter = new ArrayAdapter<MediaItem>(this, 0, sidebarSavedItems) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = convertView;
+                if (view == null) {
+                    view = getLayoutInflater().inflate(R.layout.item_playlist_row, parent, false);
+                }
+                final MediaItem entry = getItem(position);
+                final TextView tv = view.findViewById(R.id.tvPlaylistTitle);
+                String judul = (entry.title == null || entry.title.trim().isEmpty())
+                        ? (entry.uri != null ? entry.uri.toString() : "(tanpa judul)")
+                        : entry.title;
+                tv.setText(judul);
+                tv.setSelected(true);
+
+                final long[] downTime = new long[1];
+                final boolean[] longFired = new boolean[1];
+                final Handler longHandler = new Handler(Looper.getMainLooper());
+                final Runnable longRunnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        longFired[0] = true;
+                        confirmDeletePlaylist(entry);
+                    }
+                };
+
+                view.setOnTouchListener(new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View v, MotionEvent event) {
+                        switch (event.getAction()) {
+                            case MotionEvent.ACTION_DOWN:
+                                longFired[0] = false;
+                                longHandler.postDelayed(longRunnable, 4000);
+                                return true;
+                            case MotionEvent.ACTION_UP:
+                                longHandler.removeCallbacks(longRunnable);
+                                if (!longFired[0]) {
+                                    loadPlaylist(entry);
+                                    expandSidebar();
+                                }
+                                return true;
+                            case MotionEvent.ACTION_CANCEL:
+                            case MotionEvent.ACTION_MOVE:
+                                longHandler.removeCallbacks(longRunnable);
+                                return true;
+                        }
+                        return false;
+                    }
+                });
+
+                TextView btnHapus = view.findViewById(R.id.btnHapusPlaylist);
+                if (btnHapus != null) {
+                    btnHapus.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            confirmDeletePlaylist(entry);
+                        }
+                    });
+                }
+
+                return view;
+            }
+        };
+        sidebarList.setAdapter(sidebarAdapter);
+
+        if (rightContentContainer != null) {
+            rightContentContainer.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                        collapseSidebar();
+                    }
+                    return false;
+                }
+            });
+        }
+
+        refreshSidebar();
+    }
+
+    private void applySidebarWidth() {
+        if (sidebarContainer == null) return;
+        DisplayMetrics dm = getResources().getDisplayMetrics();
+        int screenWidthPx = dm.widthPixels;
+        ViewGroup.LayoutParams params = sidebarContainer.getLayoutParams();
+        if (sidebarExpanded) {
+            params.width = screenWidthPx / 2;
+        } else {
+            params.width = (int) (84 * dm.density);
+        }
+        sidebarContainer.setLayoutParams(params);
+    }
+
+    private void expandSidebar() {
+        sidebarExpanded = true;
+        applySidebarWidth();
+    }
+
+    private void collapseSidebar() {
+        if (sidebarExpanded) {
+            sidebarExpanded = false;
+            applySidebarWidth();
+        }
+    }
+
+    private void confirmDeletePlaylist(final MediaItem entry) {
+        String judul = (entry.title == null || entry.title.trim().isEmpty()) ? "playlist ini" : entry.title;
+        new AlertDialog.Builder(this)
+                .setTitle("Hapus Playlist")
+                .setMessage("Apakah anda ingin menghapus \"" + judul + "\"?")
+                .setNegativeButton("Batal", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .setPositiveButton("Hapus", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        SavedLinksStore.hapus(MainActivity.this, entry.uri.toString());
+                        refreshSidebar();
+                        Toast.makeText(MainActivity.this, "Playlist dihapus", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .show();
+    }
+
+    private void loadPlaylist(final MediaItem playlistItem) {
+        final String url = playlistItem.uri.toString();
+        Toast.makeText(this, "Memuat playlist...", Toast.LENGTH_SHORT).show();
+
+        M3uParser.parseAsync(this, url, new M3uParser.Callback() {
+            @Override
+            public void onSuccess(List<M3uParser.MediaEntry> entries) {
+                List<MediaItem> mediaItems = new ArrayList<>();
+                if (entries.isEmpty()) {
+                    MediaItem mi = new MediaItem(Uri.parse(url), MediaItem.TYPE_VIDEO);
+                    mi.isLocal = false;
+                    mediaItems.add(mi);
+                } else {
+                    for (M3uParser.MediaEntry e : entries) {
+                        MediaItem mi = new MediaItem(Uri.parse(e.url), MediaItem.TYPE_VIDEO);
+                        mi.isLocal = false;
+                        mi.title = e.title;
+                        mi.thumbUrl = e.thumbUrl;
+                        mi.isM3u = true;
+                        mediaItems.add(mi);
+                    }
+                }
+                ExternalMediaStore.gantiSemua(MainActivity.this, mediaItems, playlistItem.title);
+                activeSource = ExternalMediaStore.getSourceLabel(MainActivity.this);
+                renderFromExternalOnly();
+            }
+
+            @Override
+            public void onError(String message) {
+                List<MediaItem> mediaItems = new ArrayList<>();
+                MediaItem mi = new MediaItem(Uri.parse(url), MediaItem.TYPE_VIDEO);
+                mi.isLocal = false;
+                mediaItems.add(mi);
+                ExternalMediaStore.gantiSemua(MainActivity.this, mediaItems, playlistItem.title);
+                activeSource = ExternalMediaStore.getSourceLabel(MainActivity.this);
+                Toast.makeText(MainActivity.this, "Gagal parsing: " + message, Toast.LENGTH_LONG).show();
+                renderFromExternalOnly();
+            }
+        });
+    }
+
+    private void refreshSidebar() {
+        if (sidebarList == null || sidebarAdapter == null) return;
+
+        sidebarSavedItems.clear();
+        sidebarSavedItems.addAll(SavedLinksStore.getAll(this));
+
+        sidebarAdapter.notifyDataSetChanged();
+    }
+
+    private void setupProfilButtons() {
+        final TextView btnMode = container.findViewById(R.id.btnModeTampilan);
+        TextView btnLogCrash = container.findViewById(R.id.btnLogCrash);
+
+        if (btnMode != null) {
+            String mode = DisplayModeStore.getEffectiveMode(this);
+            btnMode.setText(mode.equals("tv") ? "Mode Tampilan: Android TV (paksa)" : "Mode Tampilan: Android (otomatis)");
+
+            btnMode.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String current = DisplayModeStore.getEffectiveMode(MainActivity.this);
+                    String next = current.equals("tv") ? "android" : "tv";
+                    DisplayModeStore.setMode(MainActivity.this, next);
+                    recreate();
+                }
+            });
+        }
+
+        if (btnLogCrash != null) {
+            btnLogCrash.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    startActivity(new Intent(MainActivity.this, CrashLogActivity.class));
+                }
+            });
+        }
+    }
+
+    private void renderBeranda() {
+        View emptyState = container.findViewById(R.id.emptyState);
+        GridView grid = container.findViewById(R.id.gridBeranda);
+        if (grid == null) return;
+
+        final List<MediaItem> filtered = new ArrayList<>();
+        for (MediaItem m : combinedMedia) {
+            if (currentFilter == 0) filtered.add(m);
+            else if (currentFilter == 1 && m.type == MediaItem.TYPE_IMAGE) filtered.add(m);
+            else if (currentFilter == 2 && m.type == MediaItem.TYPE_VIDEO) filtered.add(m);
+        }
+
+        if (filtered.isEmpty()) {
+            if (emptyState != null) emptyState.setVisibility(View.VISIBLE);
+            grid.setVisibility(View.GONE);
+        } else {
+            if (emptyState != null) emptyState.setVisibility(View.GONE);
+            grid.setVisibility(View.VISIBLE);
+            grid.setAdapter(new ThumbnailAdapter(this, filtered, new ThumbnailAdapter.OnThumbnailClickListener() {
+                @Override
+                public void onThumbnailClick(MediaItem item) {
+                    if (item.type == MediaItem.TYPE_VIDEO) {
+                        ArrayList<String> videoPlaylist = new ArrayList<>();
+                        int clickedIndex = 0;
+                        int counter = 0;
+                        for (MediaItem m : filtered) {
+                            if (m.type == MediaItem.TYPE_VIDEO) {
+                                videoPlaylist.add(m.uri.toString());
+                                if (m.uri.equals(item.uri)) clickedIndex = counter;
+                                counter++;
+                            }
+                        }
+                        PlaylistHolder.set(videoPlaylist);
+                        Intent intent = new Intent(MainActivity.this, VideoPlayerActivity.class);
+                        intent.putExtra("index", clickedIndex);
+                        startActivity(intent);
+                    } else {
+                        Intent intent = new Intent(MainActivity.this, PreviewImageActivity.class);
+                        intent.putExtra("uri", item.uri.toString());
+                        startActivity(intent);
+                    }
+                }
+            }));
+        }
+    }
+}

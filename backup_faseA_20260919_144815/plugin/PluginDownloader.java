@@ -1,0 +1,84 @@
+package com.memecio.app.plugin;
+
+import android.content.Context;
+import android.util.Log;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+/**
+ * Download .jar plugin dari URL → simpan → load.
+ * Support deteksi .cs3 (CloudStream) — kasih pesan ramah.
+ */
+public class PluginDownloader {
+
+    private static final String TAG = "PluginDownloader";
+    private static final int TIMEOUT_MS = 30000;
+
+    public static PluginLoadResult download(Context ctx, RepositoryPlugin rp) {
+        if (rp == null || rp.downloadUrl == null || rp.downloadUrl.isEmpty()) {
+            return PluginLoadResult.fail("unknown", "URL download kosong");
+        }
+
+        String url = RepositoryManager.normalizeUrl(rp.downloadUrl);
+        if (url == null || url.isEmpty()) {
+            return PluginLoadResult.fail(rp.name, "URL tidak valid");
+        }
+
+        HttpURLConnection conn = null;
+        File target = null;
+        try {
+            URL u = new URL(url);
+            conn = (HttpURLConnection) u.openConnection();
+            conn.setConnectTimeout(TIMEOUT_MS);
+            conn.setReadTimeout(TIMEOUT_MS);
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("User-Agent", "MemecioApp/1.0");
+            conn.setInstanceFollowRedirects(true);
+
+            int code = conn.getResponseCode();
+            if (code != 200) {
+                return PluginLoadResult.fail(rp.name, "HTTP error " + code);
+            }
+
+            String namaFile = "plugin_" + rp.name.replaceAll("[^A-Za-z0-9_]", "_")
+                            + "_" + System.currentTimeMillis() + ".jar";
+            target = new File(PluginStorage.getPluginFolder(ctx), namaFile);
+
+            InputStream in = conn.getInputStream();
+            FileOutputStream out = new FileOutputStream(target);
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+            in.close(); out.close();
+
+            PluginLoadResult result = PluginLoader.loadFromJar(ctx, target);
+            if (result.success && result.descriptor != null) {
+                // Override author + description dari RepositoryPlugin
+                // (manifest.json CloudStream biasanya tidak punya field ini)
+                if (rp.author != null && !rp.author.isEmpty()) {
+                    result.descriptor.author = rp.author;
+                }
+                if (rp.description != null && !rp.description.isEmpty()) {
+                    result.descriptor.description = rp.description;
+                }
+                // Update storage dengan info lengkap
+                PluginStorage.addPlugin(ctx, result.descriptor);
+            }
+            if (!result.success) {
+                target.delete();
+            }
+            return result;
+
+        } catch (Exception e) {
+            Log.e(TAG, "Download gagal: " + e.getMessage(), e);
+            if (target != null && target.exists()) target.delete();
+            return PluginLoadResult.fail(rp.name, e.getMessage());
+        } finally {
+            if (conn != null) try { conn.disconnect(); } catch (Exception ignored) {}
+        }
+    }
+}

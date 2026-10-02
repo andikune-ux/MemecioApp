@@ -1,0 +1,34 @@
+package com.memecio.app.js;
+
+import android.util.Log;
+
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.NativeJavaObject;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+
+/**
+ * Bridge: inject Java helper ke scope Rhino.
+ * Pakai NativeJavaObject wrapper supaya JS bisa akses method.
+ */
+public class JsBridge {
+
+    private static final String TAG = "JsBridge";
+
+    public JsBridge() {}
+
+    public static void inject(Context cx, Scriptable scope) {
+        try {
+            ScriptableObject.putProperty(scope, "http", new NativeJavaObject(scope, new JsHttp(), JsHttp.class));
+            Log.d(TAG, "inject http OK");
+        } catch (Throwable t) {
+            Log.e(TAG, "inject http FAIL: " + t.getMessage(), t);
+        }
+        try {
+            ScriptableObject.putProperty(scope, "console", new NativeJavaObject(scope, new JsConsole(), JsConsole.class));
+            Log.d(TAG, "inject console OK");
+        } catch (Throwable t) {
+            Log.e(TAG, "inject console FAIL: " + t.getMessage(), t);
+        }
+    }
+}

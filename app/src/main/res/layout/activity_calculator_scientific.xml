@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#000000"
+    android:padding="2dp">
+
+    <TextView
+        android:id="@+id/tvDisplayScientific"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="bottom|end"
+        android:padding="12dp"
+        android:text="0"
+        android:textColor="#FFFFFF"
+        android:textSize="42sp"
+        android:maxLines="2"
+        android:ellipsize="start" />
+
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="6"
+        android:rowCount="5">
+
+        <TextView android:id="@+id/btnSin" android:text="sin" android:textColor="#FFFFFF" android:textSize="14sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#333333" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btnCos" android:text="cos" android:textColor="#FFFFFF" android:textSize="14sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#333333" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btnTan" android:text="tan" android:textColor="#FFFFFF" android:textSize="14sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#333333" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btnLog" android:text="log" android:textColor="#FFFFFF" android:textSize="14sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#333333" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btnLn" android:text="ln" android:textColor="#FFFFFF" android:textSize="14sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#333333" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btnSqrt" android:text="sqrt" android:textColor="#FFFFFF" android:textSize="12sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#333333" android:layout_margin="1dp"/>
+
+        <TextView android:id="@+id/btnLeftParen" android:text="(" android:textColor="#FFFFFF" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#222222" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btnRightParen" android:text=")" android:textColor="#FFFFFF" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#222222" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btnPi" android:text="pi" android:textColor="#FFFFFF" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#222222" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btnClearSci" android:text="C" android:textColor="#FFFFFF" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#333333" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btnDelSci" android:text="Del" android:textColor="#FFFFFF" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#333333" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btnDivideSci" android:text="/" android:textColor="#FF9500" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#333333" android:layout_margin="1dp"/>
+
+        <TextView android:id="@+id/btn7Sci" android:text="7" android:textColor="#FFFFFF" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#222222" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btn8Sci" android:text="8" android:textColor="#FFFFFF" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#222222" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btn9Sci" android:text="9" android:textColor="#FFFFFF" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#222222" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btnMultiplySci" android:text="x" android:textColor="#FF9500" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#333333" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btnPower" android:text="^" android:textColor="#FFFFFF" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#333333" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btnPercentSci" android:text="%" android:textColor="#FFFFFF" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#333333" android:layout_margin="1dp"/>
+
+        <TextView android:id="@+id/btn4Sci" android:text="4" android:textColor="#FFFFFF" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#222222" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btn5Sci" android:text="5" android:textColor="#FFFFFF" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#222222" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btn6Sci" android:text="6" android:textColor="#FFFFFF" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#222222" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btnMinusSci" android:text="-" android:textColor="#FF9500" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#333333" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btn00Sci" android:text="00" android:textColor="#FFFFFF" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#222222" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btnEqualsSci" android:text="=" android:textColor="#FFFFFF" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#FF9500" android:layout_margin="1dp"/>
+
+        <TextView android:id="@+id/btn1Sci" android:text="1" android:textColor="#FFFFFF" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#222222" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btn2Sci" android:text="2" android:textColor="#FFFFFF" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#222222" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btn3Sci" android:text="3" android:textColor="#FFFFFF" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#222222" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btnPlusSci" android:text="+" android:textColor="#FF9500" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#333333" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btnDotSci" android:text="." android:textColor="#FFFFFF" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#222222" android:layout_margin="1dp"/>
+        <TextView android:id="@+id/btn0Sci" android:text="0" android:textColor="#FFFFFF" android:textSize="16sp" android:gravity="center" android:layout_columnWeight="1" android:layout_width="0dp" android:layout_height="50dp" android:clickable="true" android:focusable="true" android:background="#222222" android:layout_margin="1dp"/>
+    </GridLayout>
+</LinearLayout>

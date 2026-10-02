@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pilih kecepatan putar:"
+        android:textColor="#1C1C1E"
+        android:textSize="13sp"
+        android:paddingBottom="12dp" />
+
+    <Button
+        android:id="@+id/btnSpeed05"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="0.5x"
+        android:textAllCaps="false"
+        android:textColor="#1C1C1E"
+        android:background="@drawable/bg_glass_button"
+        android:layout_marginBottom="6dp" />
+
+    <Button
+        android:id="@+id/btnSpeed1"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="1x (Normal)"
+        android:textAllCaps="false"
+        android:textColor="#1C1C1E"
+        android:background="@drawable/bg_glass_button"
+        android:layout_marginBottom="6dp" />
+
+    <Button
+        android:id="@+id/btnSpeed15"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="1.5x"
+        android:textAllCaps="false"
+        android:textColor="#1C1C1E"
+        android:background="@drawable/bg_glass_button"
+        android:layout_marginBottom="6dp" />
+
+    <Button
+        android:id="@+id/btnSpeed2"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="2x"
+        android:textAllCaps="false"
+        android:textColor="#1C1C1E"
+        android:background="@drawable/bg_glass_button"
+        android:layout_marginBottom="6dp" />
+
+    <Button
+        android:id="@+id/btnSpeed3"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="3x"
+        android:textAllCaps="false"
+        android:textColor="#1C1C1E"
+        android:background="@drawable/bg_glass_button" />
+</LinearLayout>

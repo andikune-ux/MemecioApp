@@ -1,0 +1,63 @@
+package com.memecio.app.js;
+
+import android.util.Log;
+
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.NativeJavaObject;
+import org.mozilla.javascript.Scriptable;
+import org.mozilla.javascript.ScriptableObject;
+
+/**
+ * Bridge: inject Java helper ke scope Rhino.
+ *
+ * Pakai NativeJavaObject EKSPLISIT — Context.javaToJS kadang tidak wrap benar.
+ */
+public class JsBridge {
+
+    private static final String TAG = "JsBridge";
+
+    public JsBridge() {}
+
+    public static void inject(Context cx, Scriptable scope) {
+        // ===== Inject http =====
+        try {
+            NativeJavaObject httpWrapper = new NativeJavaObject(
+                scope, new JsHttp(), JsHttp.class);
+            ScriptableObject.putProperty(scope, "http", httpWrapper);
+
+            Object check = scope.get("http", scope);
+            if (check == Scriptable.NOT_FOUND) {
+                Log.e(TAG, "http NOT FOUND setelah put");
+            } else {
+                Log.d(TAG, "http injected, class=" + check.getClass().getName());
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "inject http FAIL: " + t.getMessage(), t);
+        }
+
+        // ===== Inject console =====
+        try {
+            NativeJavaObject consoleWrapper = new NativeJavaObject(
+                scope, new JsConsole(), JsConsole.class);
+            ScriptableObject.putProperty(scope, "console", consoleWrapper);
+
+            Object check = scope.get("console", scope);
+            if (check == Scriptable.NOT_FOUND) {
+                Log.e(TAG, "console NOT FOUND setelah put");
+            } else {
+                Log.d(TAG, "console injected");
+            }
+        } catch (Throwable t) {
+            Log.e(TAG, "inject console FAIL: " + t.getMessage(), t);
+        }
+
+        // ===== Marker =====
+        try {
+            ScriptableObject.putProperty(scope, "__jsBridgeReady", "1");
+        } catch (Throwable t) {
+            Log.e(TAG, "marker FAIL: " + t.getMessage(), t);
+        }
+
+        Log.d(TAG, "Inject selesai");
+    }
+}
