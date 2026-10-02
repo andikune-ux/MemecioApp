@@ -1,27 +1,23 @@
-package com.memecio.app;
+package com.memecio.app
 
-import android.net.Uri;
+import android.net.Uri
 
-public class MediaItem {
-    public static final int TYPE_IMAGE = 1;
-    public static final int TYPE_VIDEO = 2;
-    public static final int TYPE_FOLDER = 3;
-    public static final int TYPE_AUDIO = 4;
+class MediaItem(var uri: Uri, var type: Int) {
 
-    public Uri uri;
-    public int type;
-    public boolean isLocal = true;
-    public String title;
-    public String thumbUrl;
-    public boolean isM3u = false;
-    public long dateAdded = 0L;
-    public String folderPath = null;
-    public String sourceTitle = null;  // nama playlist/folder asal (untuk kategori fallback)
-    public long size = 0L;      // ukuran dalam byte
-    public long duration = 0L;  // durasi dalam ms (video only)
+    var isLocal: Boolean = true
+    var title: String? = null
+    var thumbUrl: String? = null
+    var isM3u: Boolean = false
+    var dateAdded: Long = 0L
+    var folderPath: String? = null
+    var sourceTitle: String? = null
+    var size: Long = 0L
+    var duration: Long = 0L
 
-    public MediaItem(Uri uri, int type) {
-        this.uri = uri;
-        this.type = type;
+    companion object {
+        const val TYPE_IMAGE = 1
+        const val TYPE_VIDEO = 2
+        const val TYPE_FOLDER = 3
+        const val TYPE_AUDIO = 4
     }
 }
