@@ -94,7 +94,6 @@ class MainActivity : Activity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        // V.1.16.69: tidak panggil applyDisplayModeSafe lagi
     }
 
     private var container: FrameLayout? = null
@@ -157,8 +156,7 @@ class MainActivity : Activity() {
         val fw = FileWriter(f, true)
         fw.write("${Date()} | [Main] $msg\n")
         fw.close()
-    } catch (ignored: Exception) {
-    }
+    } catch (ignored: Exception) {}
 }
 
 override fun onCreate(savedInstanceState: Bundle?) {
@@ -1223,6 +1221,7 @@ private fun loadSearchHistory() {
         val btnMode = container?.findViewById<View>(R.id.btnModeTampilan)
         val btnPencarianOnline = container?.findViewById<View>(R.id.btnPencarianOnline)
         val btnStatistik = container?.findViewById<View>(R.id.btnStatistik)
+        val btnInfoAplikasi = container?.findViewById<View>(R.id.btnInfoAplikasi)
         val tvVersiBuild = container?.findViewById<TextView>(R.id.tvVersiBuild)
         tvVersiBuild?.let {
             try {
@@ -1288,6 +1287,9 @@ private fun loadSearchHistory() {
             switchToTab(0); renderFromExternalOnly()
         }
         btnStatistik?.setOnClickListener { startActivity(Intent(this, StatistikActivity::class.java)) }
+        btnInfoAplikasi?.setOnClickListener {
+            startActivity(Intent(this, AppInfoActivity::class.java))
+        }
         btnBackupLengkap?.setOnClickListener { showBackupChoiceDialog() }
         btnLogCrash?.setOnClickListener { startActivity(Intent(this, CrashLogActivity::class.java)) }
         btnAutoExit?.setOnClickListener { showAutoExitDialog() }
@@ -1297,5 +1299,435 @@ private fun loadSearchHistory() {
                 btnDevTools.setOnClickListener { showDevToolsDialog() }
             } else btnDevTools.visibility = View.GONE
         }
+    }
+
+    private fun showBackupChoiceDialog() {
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_backup_choice)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.findViewById<View>(R.id.btnChoiceBackupAman).setOnClickListener {
+            dialog.dismiss(); checkPermissionAndBackupAman()
+        }
+        dialog.findViewById<View>(R.id.btnChoiceEkspor).setOnClickListener {
+            dialog.dismiss(); BackupRestoreHelper.exportPlaylists(this)
+        }
+        dialog.findViewById<View>(R.id.btnChoiceImpor).setOnClickListener {
+            dialog.dismiss()
+            AlertDialog.Builder(this)
+                .setTitle("Impor JSON")
+                .setMessage("Impor data dari file backup terbaru?\nData lama tetap ada, hanya ditambahkan.")
+                .setNegativeButton("Batal", null)
+                .setPositiveButton("Impor") { _, _ -> BackupRestoreHelper.importPlaylists(this) }
+                .show()
+        }
+        dialog.findViewById<View>(R.id.btnBatalBackupChoice).setOnClickListener { dialog.dismiss() }
+        dialog.show()
+    }
+
+    private fun checkPermissionAndBackupAman() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()) {
+                try {
+                    val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                    intent.data = Uri.parse("package:$packageName")
+                    startActivity(intent)
+                    Toast.makeText(this, "Izinkan akses semua file, lalu tekan Backup lagi", Toast.LENGTH_LONG).show()
+                } catch (e: Exception) {
+                    startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+                }
+                return
+            }
+        }
+        ProjectExportHelper.export(this)
+    }
+
+    private fun showDevToolsDialog() {
+        val all = SecretCodeRegistry.getAll()
+        val items = Array(all.size) { i ->
+            val c = all[i]
+            c.code + " - " + c.title + (if (c.hidden) " [hidden]" else "")
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Developer Tools")
+            .setItems(items) { _, which -> handleDevCode(all[which].code) }
+            .setNegativeButton("Tutup", null)
+            .show()
+    }
+
+    private fun handleDevCode(code: String) {
+        try {
+            when (code) {
+                "000" -> startActivity(Intent(this, SecretCodesActivity::class.java))
+                "111" -> startActivity(Intent(this, CrashHistoryActivity::class.java))
+                "222" -> startActivity(Intent(this, ChangelogActivity::class.java))
+                "333" -> startActivity(Intent(this, SystemInfoActivity::class.java))
+                "555" -> startActivity(Intent(this, NetworkInfoActivity::class.java))
+                "666" -> startActivity(Intent(this, PermissionInfoActivity::class.java))
+                "777" -> startActivity(Intent(this, StorageAnalyzerActivity::class.java))
+                "888" -> startActivity(Intent(this, StatistikActivity::class.java))
+                "999" -> ProjectExportHelper.export(this)
+                "123" -> CacheResetter.confirmAndReset(this)
+                "456" -> RepairDatabaseHelper.confirmAndRepair(this)
+                "789" -> FactoryResetHelper.confirmAndReset(this)
+                "101" ->  { DeveloperModeStore.toggle(this); recreate() }
+                "103" -> TestGestureHelper.showGuide(this)
+                "104" -> TestModesHelper.showChoice(this)
+                "102" -> throw RuntimeException("Force crash via Dev Tools")
+            }
+        } catch (e: Exception) {
+            Toast.makeText(this, "Gagal: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showAutoExitDialog() {
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_auto_exit)
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+        dialog.findViewById<View>(R.id.btnExit5)?.setOnClickListener { AutoExitManager.getInstance().start(this, 5); dialog.dismiss() }
+        dialog.findViewById<View>(R.id.btnExit15)?.setOnClickListener { AutoExitManager.getInstance().start(this, 15); dialog.dismiss() }
+        dialog.findViewById<View>(R.id.btnExit30)?.setOnClickListener { AutoExitManager.getInstance().start(this, 30); dialog.dismiss() }
+        dialog.findViewById<View>(R.id.btnExit60)?.setOnClickListener { AutoExitManager.getInstance().start(this, 60); dialog.dismiss() }
+        dialog.findViewById<View>(R.id.btnExit120)?.setOnClickListener { AutoExitManager.getInstance().start(this, 120); dialog.dismiss() }
+        dialog.findViewById<View>(R.id.btnExitCancel)?.setOnClickListener {
+            AutoExitManager.getInstance().cancel(this)
+            Toast.makeText(this, "Auto Exit dimatikan", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
+        }
+        dialog.findViewById<View>(R.id.btnExitBatal)?.setOnClickListener { dialog.dismiss() }
+        dialog.show()
+    }
+
+    private fun showMultiSourceDebug() {
+        try {
+            val sb = StringBuilder()
+            val ids = MultiSourceStore.listSourceIds(this)
+            sb.append("Total sources: ${ids.size}\n\n")
+            if (ids.isEmpty()) sb.append("(Kosong - belum ada sumber tersimpan)\n")
+            var idx = 1
+            for (id in ids) {
+                val label = MultiSourceStore.getLabel(this, id)
+                val items = MultiSourceStore.getBySource(this, id)
+                sb.append("[$idx] $id\n")
+                sb.append("    Label: $label\n")
+                sb.append("    Items: ${items.size}\n\n")
+                idx++
+            }
+            val debugText = sb.toString()
+            val view = layoutInflater.inflate(R.layout.dialog_debug_multi, null)
+            view.findViewById<TextView>(R.id.tvDebugContent).text = debugText
+            val dialog = AlertDialog.Builder(this).setView(view).setCancelable(true).create()
+            view.findViewById<Button>(R.id.btnDebugSalin)?.setOnClickListener {
+                try {
+                    val cb = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    cb.setPrimaryClip(ClipData.newPlainText("Debug Multi", debugText))
+                    Toast.makeText(this, "Tersalin", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {}
+            }
+            view.findViewById<Button>(R.id.btnDebugExit)?.setOnClickListener { dialog.dismiss() }
+            dialog.show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun showSmartPlaylistDialog() {
+        val dens = resources.displayMetrics.density
+        val pad = (16 * dens).toInt()
+        val cont = LinearLayout(this)
+        cont.orientation = LinearLayout.VERTICAL
+        cont.setPadding(pad, pad, pad, pad)
+        val desc = TextView(this)
+        desc.text = "Smart Playlist otomatis mengelompokkan video berdasarkan Riwayat, Populer, Terbaru, dan Kategori."
+        desc.textSize = 12f
+        desc.setTextColor(0xFF8A8A8E.toInt())
+        desc.setPadding(0, 0, 0, (16 * dens).toInt())
+        cont.addView(desc)
+        val row = LinearLayout(this)
+        row.orientation = LinearLayout.HORIZONTAL
+        row.gravity = Gravity.CENTER_VERTICAL
+        val tvLabel = TextView(this)
+        tvLabel.text = "Aktifkan Smart Playlist"
+        tvLabel.textSize = 13f
+        tvLabel.setTextColor(0xFF1C1C1E.toInt())
+        tvLabel.layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        row.addView(tvLabel)
+        val swSmart = Switch(this)
+        swSmart.isChecked = "otomatis" == smartMode || SmartPlaylistHelper.MODE_KATEGORI == smartMode
+        row.addView(swSmart)
+        cont.addView(row)
+        AlertDialog.Builder(this)
+            .setTitle("Smart Playlist (Online)")
+            .setView(cont)
+            .setCancelable(true)
+            .setPositiveButton("Terapkan") { _, _ ->
+                if (swSmart.isChecked) {
+                    smartMode = "otomatis"; activeSource = "external"
+                    smartTarget = ""; activeCategory = ""; saveAndRender()
+                } else {
+                    smartMode = ""; smartTarget = ""; activeCategory = ""
+                    getSharedPreferences("memecio_settings", MODE_PRIVATE).edit().putString("smart_mode", "").apply()
+                    updateSmartLabel()
+                    findViewById<Switch>(R.id.switchSmart)?.isChecked = false
+                    renderBeranda()
+                }
+            }
+            .setNegativeButton("Tutup") { _, _ ->
+                if (smartMode.isEmpty()) findViewById<Switch>(R.id.switchSmart)?.isChecked = false
+            }
+            .show()
+    }
+
+    private fun saveAndRender() {
+        getSharedPreferences("memecio_settings", MODE_PRIVATE).edit().putString("smart_mode", smartMode).apply()
+        updateSmartLabel()
+        renderBeranda()
+    }
+
+    private fun showMediaScanDialog() {
+        val dens = resources.displayMetrics.density
+        val pad = (16 * dens).toInt()
+        val cont = LinearLayout(this)
+        cont.orientation = LinearLayout.VERTICAL
+        cont.setPadding(pad, pad, pad, pad)
+        val swMediaScan = Switch(this)
+        swMediaScan.isChecked = getSharedPreferences("memecio_settings", MODE_PRIVATE).getBoolean("folder_scan_enabled", false)
+        val tvLbl = TextView(this)
+        tvLbl.text = "Aktifkan Media Scan"; tvLbl.textSize = 13f; tvLbl.setTextColor(0xFF1C1C1E.toInt())
+        cont.addView(tvLbl); cont.addView(swMediaScan)
+        AlertDialog.Builder(this)
+            .setTitle("Media Scan (Offline)")
+            .setView(cont)
+            .setPositiveButton("Terapkan") { _, _ ->
+                if (swMediaScan.isChecked) {
+                    folderModeEnabled = true; selectedFolder = null
+                    getSharedPreferences("memecio_settings", MODE_PRIVATE).edit()
+                        .putBoolean("folder_scan_enabled", true).putBoolean("offline_enabled", true).apply()
+                    renderBeranda()
+                } else {
+                    folderModeEnabled = false
+                    getSharedPreferences("memecio_settings", MODE_PRIVATE).edit().putBoolean("folder_scan_enabled", false).apply()
+                    renderBeranda()
+                }
+            }
+            .setNegativeButton("Tutup", null)
+            .show()
+    }
+
+    private fun buildCategoryChips() {
+        val ccc = categoryChipsContainer ?: return
+        val ccs = categoryChipScroll ?: return
+        ccc.removeAllViews()
+        val counts = LinkedHashMap<String, Int>()
+        for (m in combinedMedia) {
+            val judul = m.title ?: m.uri.toString()
+            val cat = CategoryHelper.deteksiKategoriUtama(judul)
+            if (cat == null || cat.isEmpty() || "Lainnya" == cat) continue
+            val c = counts[cat]; counts[cat] = if (c == null) 1 else c + 1
+        }
+        if (counts.isEmpty()) { ccs.visibility = View.GONE; return }
+        ccs.visibility = View.VISIBLE
+        for ((cat, count) in counts) {
+            val chip = TextView(this)
+            chip.text = "$cat ($count)"; chip.textSize = 11f
+            chip.setPadding(24, 12, 24, 12)
+            chip.setTextColor(0xFF1C1C1E.toInt())
+            chip.setBackgroundResource(R.drawable.bg_glass_button)
+            chip.setOnClickListener {
+                activeCategory = if (cat == activeCategory) "" else cat
+                buildCategoryChips(); renderBeranda()
+            }
+            ccc.addView(chip)
+        }
+    }
+
+    private fun renderFolderList() {
+        val kl = kategoriList ?: return
+        kl.removeAllViews()
+        val counts = LinkedHashMap<String, Int>()
+        for (m in combinedMedia) {
+            val f = m.folderPath ?: "Root"
+            val c = counts[f]; counts[f] = if (c == null) 1 else c + 1
+        }
+        if (counts.isEmpty()) return
+        for ((folder, count) in counts) addFolderRow(folder, count)
+    }
+
+    private fun addFolderRow(folderName: String, count: Int) {
+        val kl = kategoriList ?: return
+        val row = LinearLayout(this)
+        row.orientation = LinearLayout.HORIZONTAL
+        row.setPadding(16, 20, 16, 20)
+        row.isClickable = true; row.isFocusable = true
+        row.setBackgroundResource(R.drawable.bg_glass_card)
+        val name = TextView(this)
+        name.text = "$folderName ($count)"; name.textSize = 14f
+        name.setTextColor(0xFF1C1C1E.toInt())
+        row.addView(name)
+        row.setOnClickListener { selectedFolder = folderName; renderBeranda() }
+        kl.addView(row)
+    }
+
+    private fun renderKategori(items: List<MediaItem>) {
+        val kl = kategoriList ?: return
+        kl.removeAllViews()
+        if (items.isEmpty()) return
+        val groups = LinkedHashMap<String, MutableList<MediaItem>>()
+        for (m in items) {
+            val judul = m.title ?: m.uri.toString()
+            val cats = CategoryHelper.deteksiKategori(judul) ?: arrayListOf("Lainnya")
+            for (cat in cats) {
+                if (!groups.containsKey(cat)) groups[cat] = ArrayList()
+                groups[cat]?.add(m)
+            }
+        }
+        for ((key, value) in groups) addKategoriRow(key, value)
+    }
+
+    private fun addKategoriRow(judul: String, items: List<MediaItem>) {
+        val kl = kategoriList ?: return
+        val header = TextView(this)
+        header.text = "$judul (${items.size})"
+        header.textSize = 14f
+        header.setTypeface(null, Typeface.BOLD)
+        header.setTextColor(0xFF1C1C1E.toInt())
+        header.setPadding(16, 18, 16, 6)
+        kl.addView(header)
+        val hsv = HorizontalScrollView(this)
+        val rowLayout = LinearLayout(this)
+        rowLayout.orientation = LinearLayout.HORIZONTAL
+        for (item in items.take(30)) {
+            val tv = TextView(this)
+            tv.text = item.title ?: "Video"
+            tv.textSize = 11f
+            tv.setPadding(16, 10, 16, 10)
+            tv.setTextColor(0xFF1C1C1E.toInt())
+            tv.setBackgroundResource(R.drawable.bg_glass_card)
+            tv.setOnClickListener {
+                val idx = combinedMedia.indexOfFirst { it.uri == item.uri }
+                if (idx >= 0) {
+                    MixedPlaylistHolder.set(combinedMedia, idx)
+                    if (item.type == MediaItem.TYPE_VIDEO) {
+                        val vp = ArrayList<String>()
+                        combinedMedia.forEach { if (it.type == MediaItem.TYPE_VIDEO) vp.add(it.uri.toString()) }
+                        PlaylistHolder.set(vp)
+                        val intent = Intent(this, VideoPlayerActivity::class.java)
+                        intent.putExtra("index", idx)
+                        startActivity(intent)
+                    } else {
+                        val intent = Intent(this, PreviewImageActivity::class.java)
+                        intent.putExtra("index", idx)
+                        startActivity(intent)
+                    }
+                }
+            }
+            rowLayout.addView(tv)
+        }
+        hsv.addView(rowLayout)
+        kl.addView(hsv)
+    }
+
+    private fun expandKategori(judul: String, items: List<MediaItem>) {
+        val oe = overlayExpand ?: return
+        tvExpandTitle?.text = judul
+        oe.visibility = View.VISIBLE
+    }
+
+    private fun shrinkKategori() {
+        overlayExpand?.visibility = View.GONE
+    }
+
+    private fun renderSmartGroups(items: List<MediaItem>) {
+        renderKategori(items)
+    }
+
+    private fun renderBeranda() {
+        val emptyState = container?.findViewById<View>(R.id.emptyState)
+        val grid = container?.findViewById<GridView>(R.id.gridBeranda) ?: return
+        val offlineOn = getSharedPreferences("memecio_settings", MODE_PRIVATE).getBoolean("offline_enabled", true)
+        val smartOn = smartMode.isNotEmpty()
+        val isOfflineSource = "offline" == activeSource
+        if (isOfflineSource && !offlineOn && !smartOn) {
+            emptyState?.visibility = View.VISIBLE
+            grid.visibility = View.GONE
+            return
+        }
+        val userCols = GridColumnsStore.get(this)
+        if (userCols > 0) grid.numColumns = userCols
+        val isOnline = "offline" != activeSource
+        val smartValidForOnline = "otomatis" == smartMode || SmartPlaylistHelper.MODE_KATEGORI == smartMode
+        val kategoriOn = smartMode.isNotEmpty() && isOnline && smartValidForOnline
+        val filteredTmp = ArrayList<MediaItem>()
+        val sourceList: List<MediaItem> = if (kategoriOn) MultiSourceStore.getAllMerged(this) else combinedMedia
+        for (m in sourceList) {
+            var cocokFilter = false
+            if (currentFilter == 0) cocokFilter = true
+            else if (currentFilter == 1 && m.type == MediaItem.TYPE_IMAGE) cocokFilter = true
+            else if (currentFilter == 2 && m.type == MediaItem.TYPE_VIDEO) cocokFilter = true
+            var cocokSearch = true
+            if (searchQuery.isNotEmpty()) {
+                val judul = m.title ?: ""
+                cocokSearch = judul.lowercase(Locale.getDefault()).contains(searchQuery.lowercase(Locale.getDefault()))
+            }
+            if (cocokFilter && cocokSearch) filteredTmp.add(m)
+        }
+        if (kategoriOn) {
+            emptyState?.visibility = View.GONE
+            grid.visibility = View.GONE
+            scrollKategori?.visibility = View.VISIBLE
+            renderKategori(filteredTmp)
+            return
+        } else {
+            scrollKategori?.visibility = View.GONE
+        }
+        val filtered = ArrayList<MediaItem>()
+        for (m in combinedMedia) {
+            var cocokFilter = false
+            if (currentFilter == 0) cocokFilter = true
+            else if (currentFilter == 1 && m.type == MediaItem.TYPE_IMAGE) cocokFilter = true
+            else if (currentFilter == 2 && m.type == MediaItem.TYPE_VIDEO) cocokFilter = true
+            if (!cocokFilter) continue
+            if (searchQuery.isNotEmpty()) {
+                val judul = m.title?.lowercase(Locale.getDefault()) ?: ""
+                if (!judul.contains(searchQuery.lowercase(Locale.getDefault()))) continue
+            }
+            filtered.add(m)
+        }
+        applySort(filtered)
+        if (filtered.isEmpty()) {
+            emptyState?.visibility = View.VISIBLE
+            grid.visibility = View.GONE
+        } else {
+            emptyState?.visibility = View.GONE
+            grid.visibility = View.VISIBLE
+            grid.adapter = ThumbnailAdapter(this, filtered, object : ThumbnailAdapter.OnThumbnailClickListener {
+                override fun onThumbnailClick(item: MediaItem) {
+                    val clickIdx = filtered.indexOfFirst { it.uri == item.uri }
+                    if (clickIdx < 0) return
+                    if (item.type == 4) {
+                        val intent = Intent(this@MainActivity, AudioPlayerActivity::class.java)
+                        intent.putExtra("audio_uri", item.uri.toString())
+                        intent.putExtra("audio_title", item.title ?: "Audio")
+                        startActivity(intent)
+                    } else if (item.type == MediaItem.TYPE_VIDEO || item.type == MediaItem.TYPE_IMAGE) {
+                        MixedPlaylistHolder.set(filtered, clickIdx)
+                        if (item.type == MediaItem.TYPE_VIDEO) {
+                            val vp = ArrayList<String>()
+                            filtered.forEach { if (it.type == MediaItem.TYPE_VIDEO) vp.add(it.uri.toString()) }
+                            PlaylistHolder.set(vp)
+                            val intent = Intent(this@MainActivity, VideoPlayerActivity::class.java)
+                            intent.putExtra("index", clickIdx)
+                            startActivity(intent)
+                        } else {
+                            val intent = Intent(this@MainActivity, PreviewImageActivity::class.java)
+                            intent.putExtra("index", clickIdx)
+                            startActivity(intent)
+                        }
+                    }
+                }
+            })
+        }
+        try { buildCategoryChips() } catch (ignored: Exception) {}
     }
 }
