@@ -1,15 +1,18 @@
 package com.memecio.app
 
+import android.app.Activity
 import android.app.Application
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
+import android.os.Bundle
 
 class MemecioApplication : Application() {
 
     private var screenOffReceiver: BroadcastReceiver? = null
+    private var lastUpdateCheckTime = 0L
 
     override fun onCreate() {
         super.onCreate()
@@ -25,6 +28,12 @@ class MemecioApplication : Application() {
         // Register lifecycle callbacks
         try {
             registerActivityLifecycleCallbacks(SessionManager.getInstance())
+        } catch (ignored: Exception) {
+        }
+
+        // Register cek update otomatis saat Activity dibuka
+        try {
+            registerActivityLifecycleCallbacks(UpdateLifecycleCallbacks())
         } catch (ignored: Exception) {
         }
 
@@ -45,5 +54,41 @@ class MemecioApplication : Application() {
             }
         } catch (ignored: Exception) {
         }
+    }
+
+    /**
+     * Cek update otomatis saat MainActivity / AppInfoActivity dibuka.
+     *
+     * Skip kalau:
+     * - Sedang buka VideoPlayerActivity (jangan ganggu nonton)
+     * - Baru saja cek < 30 detik yang lalu
+     */
+    private inner class UpdateLifecycleCallbacks : ActivityLifecycleCallbacks {
+        override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
+        override fun onActivityStarted(activity: Activity) {}
+
+        override fun onActivityResumed(activity: Activity) {
+            // Skip VideoPlayerActivity — jangan ganggu saat nonton
+            if (activity is VideoPlayerActivity) return
+
+            // Hanya cek di MainActivity atau AppInfoActivity
+            val shouldCheckHere = (activity is MainActivity) || (activity is AppInfoActivity)
+            if (!shouldCheckHere) return
+
+            // Throttle 30 detik supaya tidak spam request
+            val now = System.currentTimeMillis()
+            if (now - lastUpdateCheckTime < 30_000L) return
+            lastUpdateCheckTime = now
+
+            try {
+                UpdateDialog.checkAndShow(activity)
+            } catch (ignored: Exception) {
+            }
+        }
+
+        override fun onActivityPaused(activity: Activity) {}
+        override fun onActivityStopped(activity: Activity) {}
+        override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+        override fun onActivityDestroyed(activity: Activity) {}
     }
 }
