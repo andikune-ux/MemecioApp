@@ -11,8 +11,8 @@ android {
         applicationId "com.memecio.app"
         minSdk 21
         targetSdk 34
-        versionCode 94
-        versionName "1.16.93"
+        versionCode 102
+        versionName "1.02.0"
     }
 
     buildTypes {
@@ -57,7 +57,6 @@ dependencies {
     implementation 'androidx.documentfile:documentfile:1.0.1'
     implementation 'org.mozilla:rhino:1.7.14'
 
-    // Kotlin Standard Library
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.0"
 }
 
