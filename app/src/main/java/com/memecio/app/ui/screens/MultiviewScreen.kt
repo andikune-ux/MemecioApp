@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -99,7 +100,7 @@ fun MultiviewScreen(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, "Back", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.White)
                     }
                     Text(
                         text = "Multiview Dual Player",
@@ -184,7 +185,7 @@ fun MultiviewScreen(
                         player1.volume = if (isMuted1) 0f else 1f
                     }, modifier = Modifier.size(32.dp)) {
                         Icon(
-                            if (isMuted1) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                            if (isMuted1) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp,
                             "Audio",
                             tint = if (!isMuted1) NeonPink else Color.Gray,
                             modifier = Modifier.size(18.dp)
@@ -193,7 +194,7 @@ fun MultiviewScreen(
                 }
             }
 
-            Divider(color = NeonViolet.copy(alpha = 0.6f), thickness = 2.dp)
+            HorizontalDivider(color = NeonViolet.copy(alpha = 0.6f), thickness = 2.dp)
 
             // Player 2 Pane
             Box(
@@ -244,7 +245,7 @@ fun MultiviewScreen(
                         player2.volume = if (isMuted2) 0f else 1f
                     }, modifier = Modifier.size(32.dp)) {
                         Icon(
-                            if (isMuted2) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                            if (isMuted2) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp,
                             "Audio",
                             tint = if (!isMuted2) NeonPink else Color.Gray,
                             modifier = Modifier.size(18.dp)

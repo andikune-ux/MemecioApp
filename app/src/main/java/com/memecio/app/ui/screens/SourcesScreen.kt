@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -62,7 +63,7 @@ fun SourcesScreen(
                 title = { Text("Media Sources & Streams", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -105,7 +106,7 @@ fun SourcesScreen(
                 SourceActionCard(
                     title = "Import M3U / IPTV Playlist",
                     description = "Parse channel lists, groups, and logos from M3U text",
-                    icon = Icons.Default.PlaylistPlay,
+                    icon = Icons.AutoMirrored.Filled.PlaylistPlay,
                     iconTint = NeonPink,
                     onClick = { showM3uDialog = true }
                 )
