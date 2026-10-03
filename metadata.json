@@ -1,0 +1,6 @@
+{
+  "name": "Memecio",
+  "description": "Smart multimedia player and vault with discreet calculator interface, multi-source streaming, playlist management, and advanced playback controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

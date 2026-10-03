@@ -1,236 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Izin dasar -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-
-    <!-- Izin install APK (untuk fitur auto-update) -->
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-
-    <!-- Izin storage (Android 12 ke bawah) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
-    <uses-permission
-        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="29" />
-
-    <!-- Izin media (Android 13+) -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-
-    <!-- Izin manage all files (Android 11+) -->
-    <uses-permission
-        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
-        tools:ignore="ScopedStorage" />
-
-    <!-- Izin notifikasi (Android 13+) -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
-    <!-- Izin foreground service -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
-
-    <!-- Fitur Android TV -->
-    <uses-feature
-        android:name="android.software.leanback"
-        android:required="false" />
-    <uses-feature
-        android:name="android.hardware.touchscreen"
-        android:required="false" />
 
     <application
         android:name=".MemecioApplication"
         android:allowBackup="true"
-        android:banner="@drawable/tv_banner"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:largeHeap="true"
-        android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MemecioApp"
-        android:usesCleartextTraffic="true"
-        tools:targetApi="34">
+        android:theme="@style/Theme.Memecio"
+        android:usesCleartextTraffic="true">
 
-        <!-- ============================================ -->
-        <!-- PINTU MASUK (LAUNCHER)                       -->
-        <!-- ============================================ -->
-
-        <!-- CalculatorActivity — pintu masuk utama (PIN 140399) -->
         <activity
-            android:name=".CalculatorActivity"
+            android:name=".MainActivity"
             android:exported="true"
-            android:screenOrientation="portrait"
-            tools:ignore="LockedOrientationActivity">
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:supportsPictureInPicture="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <!-- ============================================ -->
-        <!-- ACTIVITY UTAMA                               -->
-        <!-- ============================================ -->
-
-        <activity
-            android:name=".MainActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout"
-            android:exported="false"
-            android:launchMode="singleTop" />
-
-        <activity
-            android:name=".VideoPlayerActivity"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout"
-            android:exported="false"
-            android:launchMode="singleTop"
-            android:supportsPictureInPicture="true"
-            android:resizeableActivity="true"
-            android:theme="@style/Theme.MemecioApp.Fullscreen" />
-
-        <activity
-            android:name=".AudioPlayerActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".PreviewImageActivity"
-            android:exported="false" />
-
-        <!-- ============================================ -->
-        <!-- ACTIVITY SUMBER MEDIA                        -->
-        <!-- ============================================ -->
-
-        <activity
-            android:name=".DriveSourceActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".StreamingSourceActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ServerSourceActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".CustomPlaylistActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".HiddenMediaListActivity"
-            android:exported="false" />
-
-        <!-- ============================================ -->
-        <!-- ACTIVITY KEAMANAN                            -->
-        <!-- ============================================ -->
-
-        <activity
-            android:name=".PinDialogActivity"
-            android:exported="false"
-            android:theme="@style/Theme.MemecioApp.Dialog" />
-
-        <activity
-            android:name=".CoverActivity"
-            android:exported="false"
-            android:launchMode="singleTop"
-            android:excludeFromRecents="true"
-            android:theme="@style/Theme.MemecioApp.Fullscreen" />
-
-        <!-- ============================================ -->
-        <!-- ACTIVITY INFO & TOOLS                        -->
-        <!-- ============================================ -->
-
-        <activity
-            android:name=".AppInfoActivity"
-            android:exported="false"
-            android:label="Info Aplikasi" />
-
-        <activity
-            android:name=".ChangelogActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".CrashHistoryActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".CrashLogActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".CrashLogDetailActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".DownloadListActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".NetworkInfoActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".PermissionInfoActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".RiwayatActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".StorageAnalyzerActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".SystemInfoActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".SecretCodesActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".StatistikActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".MultiviewActivity"
-            android:exported="false"
-            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout" />
-
-        <!-- ============================================ -->
-        <!-- SERVICE                                      -->
-        <!-- ============================================ -->
-
-        <service
-            android:name=".AudioPlayerService"
-            android:exported="false"
-            android:foregroundServiceType="mediaPlayback" />
-
-        <service
-            android:name=".HlsDownloadService"
-            android:exported="false"
-            android:foregroundServiceType="dataSync" />
-
-        <!-- ============================================ -->
-        <!-- FILE PROVIDER (untuk install APK)            -->
-        <!-- ============================================ -->
-
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
 
     </application>
 

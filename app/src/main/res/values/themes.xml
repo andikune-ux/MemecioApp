@@ -1,50 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <!-- ================================================ -->
-    <!-- THEME UTAMA APLIKASI                             -->
-    <!-- ================================================ -->
-    <style name="Theme.MemecioApp" parent="Theme.AppCompat.Light.NoActionBar">
-        <!-- Warna dasar -->
-        <item name="colorPrimary">#FF1E1E2E</item>
-        <item name="colorPrimaryDark">#FF12121C</item>
-        <item name="colorAccent">#FFBB86FC</item>
-
-        <!-- Window / Background -->
-        <item name="android:windowBackground">#FF12121C</item>
-        <item name="android:statusBarColor">#FF12121C</item>
-        <item name="android:navigationBarColor">#FF12121C</item>
-
-        <!-- Teks -->
-        <item name="android:textColorPrimary">#FFFFFFFF</item>
-        <item name="android:textColorSecondary">#FFB0B0B0</item>
-
-        <!-- Matikan ActionBar (biar full layar) -->
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
+    <style name="Theme.Memecio" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">#0D0B18</item>
+        <item name="android:navigationBarColor">#0D0B18</item>
+        <item name="android:windowBackground">#0D0B18</item>
     </style>
-
-    <!-- ================================================ -->
-    <!-- THEME FULLSCREEN (Video, Cover, dll)             -->
-    <!-- ================================================ -->
-    <style name="Theme.MemecioApp.Fullscreen" parent="Theme.MemecioApp">
-        <item name="android:windowFullscreen">true</item>
-        <item name="android:windowContentOverlay">@null</item>
-        <item name="android:windowActionBar">false</item>
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:windowBackground">@android:color/black</item>
-        <item name="android:colorBackgroundCacheHint">@null</item>
-    </style>
-
-    <!-- ================================================ -->
-    <!-- THEME DIALOG (PIN, Popup)                        -->
-    <!-- ================================================ -->
-    <style name="Theme.MemecioApp.Dialog" parent="Theme.AppCompat.Dialog">
-        <item name="android:windowIsFloating">true</item>
-        <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:backgroundDimEnabled">true</item>
-        <item name="android:windowCloseOnTouchOutside">false</item>
-    </style>
-
 </resources>
