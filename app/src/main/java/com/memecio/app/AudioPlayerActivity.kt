@@ -6,7 +6,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
@@ -27,7 +26,6 @@ class AudioPlayerActivity : Activity() {
     private var btnPlayPause: ImageView? = null
     private val handler = Handler(Looper.getMainLooper())
     private var userSeeking = false
-
     private val sleepHandler = Handler(Looper.getMainLooper())
     private var sleepTimerRunnable: Runnable? = null
     private var tvSleepStatus: TextView? = null
@@ -71,6 +69,7 @@ class AudioPlayerActivity : Activity() {
 
         val title = intent.getStringExtra("audio_title")
         val uri = intent.getStringExtra("audio_uri")
+
         val tvTitle = findViewById<TextView>(R.id.tvAudioTitle)
         tvTitle.text = title ?: "Audio"
 
@@ -79,18 +78,18 @@ class AudioPlayerActivity : Activity() {
         tvDuration = findViewById(R.id.tvAudioDuration)
         btnPlayPause = findViewById(R.id.btnAudioPlayPause)
 
-        findViewById<View>(R.id.btnBackAudio).setOnClickListener { finish() }
-        findViewById<View>(R.id.btnAudioPrev).setOnClickListener {
+        findViewById<android.view.View>(R.id.btnBackAudio).setOnClickListener { finish() }
+        findViewById<android.view.View>(R.id.btnAudioPrev).setOnClickListener {
             service?.getPlayer()?.seekToPrevious()
         }
-        findViewById<View>(R.id.btnAudioNext).setOnClickListener {
+        findViewById<android.view.View>(R.id.btnAudioNext).setOnClickListener {
             service?.getPlayer()?.seekToNext()
         }
-        findViewById<View>(R.id.btnAudioRewind).setOnClickListener {
+        findViewById<android.view.View>(R.id.btnAudioRewind).setOnClickListener {
             val pos = (service?.getPlayer()?.currentPosition ?: 0L) - 10000
             service?.getPlayer()?.seekTo(Math.max(0, pos))
         }
-        findViewById<View>(R.id.btnAudioForward).setOnClickListener {
+        findViewById<android.view.View>(R.id.btnAudioForward).setOnClickListener {
             val pos = (service?.getPlayer()?.currentPosition ?: 0L) + 10000
             service?.getPlayer()?.seekTo(Math.min(pos, service?.getPlayer()?.duration ?: 0L))
         }
@@ -112,9 +111,11 @@ class AudioPlayerActivity : Activity() {
                     tvCurrent?.text = formatTime(progress)
                 }
             }
+
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
                 userSeeking = true
             }
+
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 userSeeking = false
                 service?.getPlayer()?.seekTo(seekBar?.progress?.toLong() ?: 0L)
@@ -159,7 +160,8 @@ class AudioPlayerActivity : Activity() {
     private fun updateUI() {
         val playing = service?.getPlayer()?.isPlaying == true
         btnPlayPause?.setImageResource(
-            if (playing) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play
+            if (playing) android.R.drawable.ic_media_pause
+            else android.R.drawable.ic_media_play
         )
     }
 
