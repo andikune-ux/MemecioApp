@@ -81,6 +81,13 @@ dependencies {
     implementation("androidx.media3:media3-common:1.5.0")
     implementation("androidx.media3:media3-exoplayer-hls:1.5.0")
     implementation("androidx.media3:media3-session:1.5.0")
+    implementation("androidx.media3:media3-database:1.5.0")
+    implementation("androidx.media3:media3-effect:1.5.0")
+
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("com.facebook.shimmer:shimmer:0.5.0")
+    implementation("org.mozilla:rhino:1.7.14")
 
     // Image loading
     implementation("io.coil-kt:coil-compose:2.7.0")
