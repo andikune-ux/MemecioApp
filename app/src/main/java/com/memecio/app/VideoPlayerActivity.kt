@@ -375,7 +375,7 @@ class VideoPlayerActivity : Activity() {
                             Math.abs(dyMove) > Math.abs(dxMove) * 1.3f
                         ) {
                             adjustingVertical = true
-                            gestureHandler.removeCallbacks(speedBoostRunnable)
+                            speedBoostRunnable?.let { gestureHandler.removeCallbacks(it) }
                             longPressCandidate = false
                         }
                         if (adjustingVertical) {
@@ -409,7 +409,7 @@ class VideoPlayerActivity : Activity() {
                     }
 
                     MotionEvent.ACTION_UP -> {
-                        gestureHandler.removeCallbacks(speedBoostRunnable)
+                        speedBoostRunnable?.let { gestureHandler.removeCallbacks(it) }
                         val dt = System.currentTimeMillis() - startTime
                         if (isLocked) {
                             showLockIndicatorTemporarily()
@@ -457,7 +457,7 @@ class VideoPlayerActivity : Activity() {
                         return true
                     }
                     MotionEvent.ACTION_CANCEL -> {
-                        gestureHandler.removeCallbacks(speedBoostRunnable)
+                        speedBoostRunnable?.let { gestureHandler.removeCallbacks(it) }
                         if (speedBoostActive) {
                             speedBoostActive = false
                             try {
@@ -684,7 +684,7 @@ private fun showLockIndicatorTemporarily() {
             }
         }
     }
-    hideHandler.removeCallbacks(hideLockIndicatorRunnable)
+    hideLockIndicatorRunnable?.let { hideHandler.removeCallbacks(it) }
     hideHandler.postDelayed(hideLockIndicatorRunnable!!, 2000)
 }
 
@@ -708,7 +708,7 @@ private fun toggleLock() {
             lockedIndicator.visibility = View.GONE
             lockedIndicator.setOnClickListener(null)
         }
-        hideHandler.removeCallbacks(hideLockIndicatorRunnable)
+        hideLockIndicatorRunnable?.let { hideHandler.removeCallbacks(it) }
         Toast.makeText(this, "Layar terbuka", Toast.LENGTH_SHORT).show()
     }
 }
@@ -788,7 +788,7 @@ private fun trySwitchToImage(direction: Int): Boolean {
         val newIdx = mixedIdx + direction
         if (newIdx < 0 || newIdx >= mixed.size) return false
         val nextItem = mixed[newIdx]
-        if (nextItem.type != MediaItem.TYPE_IMAGE) return false
+        if (nextItem.type != com.memecio.app.MediaItem.TYPE_IMAGE) return false
 
         MixedPlaylistHolder.setCurrentIndex(newIdx)
         simpanPosisi()
@@ -955,7 +955,7 @@ private fun hideDetailOverlay() {
         .start()
 }
 
-fun getCurrentIndexSafe(): Int = currentIndex
+val currentIndexSafe: Int get() = currentIndex
 
 fun pauseForPrivacy() {
     try {
@@ -1295,7 +1295,7 @@ private fun addCurrentToPlaylist(playlistTarget: CustomPlaylistStore.Playlist?) 
             if (pl.name == playlistTarget.name) {
                 if (currentIndex >= 0 && currentIndex < playlist!!.size) {
                     val uri = playlist!![currentIndex]
-                    val item = MediaItemKotlin(Uri.parse(uri))
+                    val item = com.memecio.app.MediaItem(Uri.parse(uri), com.memecio.app.MediaItem.TYPE_VIDEO)
                     item.title = uri
                     pl.items.add(item)
                     CustomPlaylistStore.saveAll(this, all)
@@ -1326,7 +1326,7 @@ private fun showCreatePlaylistDialog() {
         pl.name = name
         if (currentIndex >= 0 && currentIndex < playlist!!.size) {
             val uri = playlist!![currentIndex]
-            val item = MediaItemKotlin(Uri.parse(uri))
+            val item = com.memecio.app.MediaItem(Uri.parse(uri), com.memecio.app.MediaItem.TYPE_VIDEO)
             item.title = uri
             pl.items.add(item)
         }

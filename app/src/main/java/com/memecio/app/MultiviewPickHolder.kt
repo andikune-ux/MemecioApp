@@ -48,4 +48,20 @@ object MultiviewPickHolder {
             slotTypes[slot] = null
         }
     }
+
+    @JvmStatic fun getUrl(slot: Int): String? = if (slot in 0..3) slotUrls[slot] else null
+    @JvmStatic fun getType(slot: Int): String? = if (slot in 0..3) slotTypes[slot] else null
+    @JvmStatic fun setPickSlot(slot: Int) { pickSlot = slot }
+    @JvmStatic fun clear(slot: Int) { clearSlot(slot) }
+    @JvmStatic fun swap(src: Int, dst: Int) {
+        if (src in 0..3 && dst in 0..3) {
+            val u = slotUrls[src]
+            slotUrls[src] = slotUrls[dst]
+            slotUrls[dst] = u
+
+            val t = slotTypes[src]
+            slotTypes[src] = slotTypes[dst]
+            slotTypes[dst] = t
+        }
+    }
 }

@@ -109,7 +109,7 @@ class ThumbnailAdapter(
             tvTitle.isSingleLine = true
             tvTitle.ellipsize = TextUtils.TruncateAt.MARQUEE
             tvTitle.marqueeRepeatLimit = -1
-            tvTitle.isHorizontallyScrolling = true
+            tvTitle.setHorizontallyScrolling(true)
         } else {
             tvTitle.text = ""
             tvTitle.visibility = View.GONE

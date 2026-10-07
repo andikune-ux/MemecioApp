@@ -148,15 +148,15 @@ class StreamingSourceActivity : Activity() {
     private fun deteksiDanProses(url: String) {
         Toast.makeText(this, "Memeriksa link...", Toast.LENGTH_SHORT).show()
         M3uParser.parseAsync(this, url, object : M3uParser.Callback {
-            override fun onSuccess(entries: List<M3uParser.MediaEntry>) {
-                if (entries.size > 1) {
+            override fun onSuccess(entries: List<M3uParser.MediaEntry>?) {
+                if (entries != null && entries.size > 1) {
                     showJudulDialog(url)
                 } else {
                     val judulVideo: String
                     var thumbVideo: String? = null
-                    if (entries.size == 1) {
+                    if (entries != null && entries.size == 1) {
                         val e = entries[0]
-                        judulVideo = if (!e.title.isNullOrBlank()) e.title else deriveTitleFromUrl(url)
+                        judulVideo = if (!e.title.isNullOrBlank()) e.title!! else deriveTitleFromUrl(url)
                         thumbVideo = e.thumbUrl
                     } else {
                         judulVideo = deriveTitleFromUrl(url)
@@ -165,7 +165,7 @@ class StreamingSourceActivity : Activity() {
                 }
             }
 
-            override fun onError(message: String) {
+            override fun onError(message: String?) {
                 Toast.makeText(this@StreamingSourceActivity, "Deteksi: $message", Toast.LENGTH_LONG).show()
                 prosesVideoTunggal(url, deriveTitleFromUrl(url), null)
             }
@@ -226,9 +226,9 @@ class StreamingSourceActivity : Activity() {
         Toast.makeText(this, "Memuat...", Toast.LENGTH_SHORT).show()
 
         M3uParser.parseAsync(this, url, object : M3uParser.Callback {
-            override fun onSuccess(entries: List<M3uParser.MediaEntry>) {
+            override fun onSuccess(entries: List<M3uParser.MediaEntry>?) {
                 val mediaItems = ArrayList<MediaItem>()
-                if (entries.isEmpty()) {
+                if (entries == null || entries.isEmpty()) {
                     val mi = MediaItem(Uri.parse(url), MediaItem.TYPE_VIDEO).apply {
                         isLocal = false
                     }
@@ -248,7 +248,7 @@ class StreamingSourceActivity : Activity() {
                 gotoBeranda()
             }
 
-            override fun onError(message: String) {
+            override fun onError(message: String?) {
                 val mediaItems = ArrayList<MediaItem>()
                 val mi = MediaItem(Uri.parse(url), MediaItem.TYPE_VIDEO).apply {
                     isLocal = false

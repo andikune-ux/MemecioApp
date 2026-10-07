@@ -563,5 +563,93 @@ class ChangelogStore {
 
             return list
         }
+
+        @JvmStatic
+        fun getFeatureStatus(): List<FeatureStatus> {
+            val list = mutableListOf<FeatureStatus>()
+            // === SELESAI ===
+            list.add(FeatureStatus("Video Player: auto-orientasi Portrait/Landscape", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Video Player: tombol Fullscreen + tombol Keluar", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Video Player: reset orientasi saat keluar", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Progress bar tipis + thumb merah saat digeser", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Preview mini saat geser progress (video lokal)", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Gestur Media Player: tahan kanan=3x, kiri=brightness, kanan=volume", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Mode TV 3-state (Auto/Android TV/Android)", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("D-pad navigasi tab + focus ring", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Kunci layar: auto-hide + ikon", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Sort by tanggal: foto & video tampil bersama", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Swipe antar tipe: foto dan video dalam satu playlist", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Fix crash foto di PreviewImageActivity", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Menu GIR: PiP, Cast placeholder, Tambah ke Playlist, Speed, Auto Skip", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Crash logging global (semua crash tercatat)", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Kode rahasia kalkulator (000, 111, 222, 333, 555, 666, 888, 102, 200, 201, 202)", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("System Info (333)", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Network Info (555)", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Permission Info (666)", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Crash History (111) dengan kategori FORCE CLOSE / CRASH", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Changelog & Status Fitur (222)", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Backup gabungan (Backup Aman + Ekspor/Impor JSON)", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Ekspor JSON: playlist manual + URL + riwayat + media eksternal", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Export Panduan Proyek (kode 999)", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Storage Analyzer (777)", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Reset Cache (123)", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Repair Database (456)", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Factory Reset (789)", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Toggle Developer Mode (101)", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Test Gesture (103)", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Test Modes (104)", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Test Media Player (444)", "Selesai", "12 Sep 2026"))
+            list.add(FeatureStatus("Download offline", "Selesai", "13 Sep 2026"))
+            list.add(FeatureStatus("Nav bottom seragam (portrait + landscape)", "Selesai", "13 Sep 2026"))
+            list.add(FeatureStatus("Versi otomatis di menu Profil", "Selesai", "13 Sep 2026"))
+            list.add(FeatureStatus("Video Zoom & Pan (pinch 2 jari)", "Selesai", "14 Sep 2026"))
+            list.add(FeatureStatus("Android TV Support (banner + LEANBACK)", "Selesai", "14 Sep 2026"))
+            list.add(FeatureStatus("Multiview 4 video/foto sekaligus (2x2 grid)", "Selesai", "14 Sep 2026"))
+            list.add(FeatureStatus("Audio focus per slot Multiview", "Selesai", "14 Sep 2026"))
+            list.add(FeatureStatus("Multiview pick dari Beranda (semua sumber)", "Selesai", "14 Sep 2026"))
+            list.add(FeatureStatus("Multiview drag & drop swap slot", "Selesai", "15 Sep 2026"))
+            list.add(FeatureStatus("Multiview Play/Pause + Replay per slot", "Selesai", "15 Sep 2026"))
+            list.add(FeatureStatus("Multiview Mute/Unmute + Fullscreen per slot", "Selesai", "15 Sep 2026"))
+            list.add(FeatureStatus("Multiview multi-audio (unmute beberapa slot)", "Selesai", "15 Sep 2026"))
+            list.add(FeatureStatus("Banking-style cover (full-screen privacy)", "Selesai", "15 Sep 2026"))
+            list.add(FeatureStatus("FLAG_SECURE (block screenshot + Recents)", "Selesai", "15 Sep 2026"))
+            list.add(FeatureStatus("Media scan cache 5 menit (Auto-Scan)", "Selesai", "15 Sep 2026"))
+            list.add(FeatureStatus("Auto-refresh media onResume", "Selesai", "15 Sep 2026"))
+            list.add(FeatureStatus("Smart Playlist 1 tombol (multi-mode)", "Selesai", "15 Sep 2026"))
+            list.add(FeatureStatus("Media grouping: Folder/Date/Size/Duration", "Selesai", "15 Sep 2026"))
+            list.add(FeatureStatus("Smart Playlist switch on/off", "Selesai", "15 Sep 2026"))
+            list.add(FeatureStatus("Mode Otomatis (chip kategori lama)", "Selesai", "15 Sep 2026"))
+            list.add(FeatureStatus("Mutex Offline <-> Smart Playlist", "Selesai", "15 Sep 2026"))
+            list.add(FeatureStatus("Toggle FLAG_SECURE via Profil + kode 0000", "Selesai", "15 Sep 2026"))
+            list.add(FeatureStatus("Smart Playlist sub-dialog Date/Duration", "Selesai", "15 Sep 2026"))
+            list.add(FeatureStatus("Hapus fitur tidak berguna (Data Saver, Zoom UI)", "Selesai", "15 Sep 2026"))
+            list.add(FeatureStatus("Media Scan by Folder (khusus offline)", "Selesai", "15 Sep 2026"))
+            // === SEBAGIAN ===
+            list.add(FeatureStatus("D-pad dan focus ring TV - belum dites di TV asli", "Sebagian", "12 Sep 2026"))
+            list.add(FeatureStatus("Cast - butuh Google Cast SDK", "Sebagian", "12 Sep 2026"))
+            list.add(FeatureStatus("Preview mini untuk streaming - butuh library tambahan", "Sebagian", "12 Sep 2026"))
+            // === BELUM ===
+            list.add(FeatureStatus("Widget channel favorit", "Belum", "-"))
+            list.add(FeatureStatus("Multi-audio track & subtitle", "Belum", "-"))
+            list.add(FeatureStatus("Mode Gelap/Terang", "Belum", "-"))
+            list.add(FeatureStatus("Sleep timer audio", "Belum", "-"))
+            list.add(FeatureStatus("Update aplikasi otomatis", "Belum", "-"))
+            return list
+        }
+
+        @JvmStatic
+        fun getFeatureSummary(): IntArray {
+            var selesai = 0
+            var sebagian = 0
+            var belum = 0
+            for (f in getFeatureStatus()) {
+                when (f.status) {
+                    "Selesai" -> selesai++
+                    "Sebagian" -> sebagian++
+                    else -> belum++
+                }
+            }
+            return intArrayOf(selesai, sebagian, belum)
+        }
     }
 }

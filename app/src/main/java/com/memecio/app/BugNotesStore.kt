@@ -447,5 +447,45 @@ class BugNotesStore {
 
             return list
         }
+
+        @JvmStatic
+        fun getBugsOpen(): List<BugNote> {
+            val list = mutableListOf<BugNote>()
+            list.add(BugNote(
+                "Preview mini tidak muncul untuk streaming",
+                "MediaMetadataRetriever hanya bisa baca video lokal, bukan HLS/MP4 streaming",
+                "Workaround",
+                "12 Sep 2026",
+                "-",
+                "Gunakan ExoPlayer ThumbnailProvider (butuh library tambahan) atau skip fitur"
+            ))
+            return list
+        }
+
+        @JvmStatic
+        fun getLimitations(): List<Limitation> {
+            val list = mutableListOf<Limitation>()
+            list.add(Limitation(
+                "Cast (Chromecast) belum berfungsi",
+                "Butuh Google Cast SDK (3MB+), registrasi Cast ID dengan akun Google."
+            ))
+            list.add(Limitation(
+                "D-pad TV belum dites di TV asli",
+                "Kode sudah ada tapi belum diverifikasi tanpa Android TV/STB fisik."
+            ))
+            list.add(Limitation(
+                "Focus ring TV belum dites di TV asli",
+                "Butuh perangkat TV fisik untuk verifikasi visual."
+            ))
+            list.add(Limitation(
+                "Data aplikasi tidak bertahan setelah uninstall",
+                "Batasan sistem Android — file apapun di /data/data/com.memecio.app/ akan hilang saat uninstall."
+            ))
+            list.add(Limitation(
+                "Bug notes hanya bisa diperbarui via rebuild APK",
+                "Karena catatan di-hardcode di BugNotesStore.kt. AI assistant update source code, bukan runtime."
+            ))
+            return list
+        }
     }
 }
