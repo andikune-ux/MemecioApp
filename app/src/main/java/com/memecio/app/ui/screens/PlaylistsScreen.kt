@@ -1,307 +1,427 @@
 package com.memecio.app.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.PlaylistPlay
+import androidx.compose.material.icons.filled.WatchLater
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.memecio.app.data.HistoryEntry
 import com.memecio.app.data.MediaItem
 import com.memecio.app.data.Playlist
-import com.memecio.app.ui.theme.*
+import com.memecio.app.ui.components.MediaItemCard
+import com.memecio.app.ui.components.MemecioTopBar
+import com.memecio.app.ui.theme.CyberAccentPink
+import com.memecio.app.ui.theme.CyberPrimary
+import com.memecio.app.ui.theme.CyberPrimaryBright
+import com.memecio.app.ui.theme.CyberSecondary
+import com.memecio.app.ui.theme.DarkBackground
+import com.memecio.app.ui.theme.DarkSurfaceCard
+import com.memecio.app.ui.theme.DarkSurfaceVariant
+import com.memecio.app.ui.theme.GlassBorder
+import com.memecio.app.ui.theme.TextMuted
+import com.memecio.app.ui.theme.TextPrimary
+import com.memecio.app.ui.theme.TextSecondary
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaylistsScreen(
     playlists: List<Playlist>,
-    history: List<HistoryEntry>,
     allMedia: List<MediaItem>,
     onCreatePlaylist: (String, String) -> Unit,
     onDeletePlaylist: (String) -> Unit,
-    onPlayMedia: (MediaItem) -> Unit,
     onClearHistory: () -> Unit,
-    onBack: () -> Unit
+    onMediaClick: (MediaItem) -> Unit,
+    onToggleFavorite: (String) -> Unit,
+    onDisguiseClick: () -> Unit
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabTitles = listOf("Playlists", "Watch Later", "Riwayat (History)")
     var showCreateDialog by remember { mutableStateOf(false) }
 
-    Scaffold(
-        containerColor = DarkBg,
-        topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(DarkSurface)
-                    .statusBarsPadding()
-            ) {
-                TopAppBar(
-                    title = { Text("Library & Playlists", fontWeight = FontWeight.Bold) },
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                        }
-                    },
-                    actions = {
-                        if (selectedTab == 0) {
-                            IconButton(onClick = { showCreateDialog = true }) {
-                                Icon(Icons.Default.Add, contentDescription = "New Playlist", tint = NeonCyan)
-                            }
-                        } else if (selectedTab == 2) {
-                            IconButton(onClick = onClearHistory) {
-                                Icon(Icons.Default.DeleteSweep, contentDescription = "Clear History", tint = AccentError)
-                            }
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = DarkSurface,
-                        titleContentColor = Color.White,
-                        navigationIconContentColor = Color.White
-                    )
-                )
+    val tabTitles = listOf("Daftar Putar", "Tonton Nanti", "Riwayat")
 
-                TabRow(
-                    selectedTabIndex = selectedTab,
-                    containerColor = DarkSurface,
-                    contentColor = NeonViolet,
-                    divider = {}
-                ) {
-                    tabTitles.forEachIndexed { index, title ->
-                        Tab(
-                            selected = selectedTab == index,
-                            onClick = { selectedTab = index },
-                            text = {
-                                Text(
-                                    text = title,
-                                    color = if (selectedTab == index) NeonCyan else TextMuted,
-                                    fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
-                                )
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-        ) {
-            when (selectedTab) {
-                0 -> {
-                    // Playlists
-                    if (playlists.isEmpty()) {
-                        EmptyState("No playlists yet", "Tap + above to create a custom playlist.")
-                    } else {
-                        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            items(playlists) { pl ->
-                                val mediaInPl = pl.mediaIds.mapNotNull { id -> allMedia.find { it.id == id } }
-                                PlaylistRowCard(
-                                    playlist = pl,
-                                    itemCount = mediaInPl.size,
-                                    onPlayAll = {
-                                        mediaInPl.firstOrNull()?.let { onPlayMedia(it) }
-                                    },
-                                    onDelete = { onDeletePlaylist(pl.id) }
-                                )
-                            }
-                        }
-                    }
-                }
-                1 -> {
-                    // Watch Later
-                    val watchLaterItems = allMedia.filter { it.isWatchLater }
-                    if (watchLaterItems.isEmpty()) {
-                        EmptyState("Watch Later is empty", "Add media to Watch Later from the options menu on any item.")
-                    } else {
-                        LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            items(watchLaterItems) { item ->
-                                Card(
-                                    colors = CardDefaults.cardColors(containerColor = DarkCard),
-                                    shape = RoundedCornerShape(12.dp),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { onPlayMedia(item) }
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(14.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(Icons.Default.PlayCircle, null, tint = NeonViolet, modifier = Modifier.size(36.dp))
-                                        Spacer(modifier = Modifier.width(12.dp))
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(item.title, color = Color.White, fontWeight = FontWeight.SemiBold)
-                                            Text(item.category, color = NeonCyan, fontSize = 12.sp)
-                                        }
-                                        Icon(Icons.Default.ChevronRight, null, tint = TextMuted)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                2 -> {
-                    // History
-                    if (history.isEmpty()) {
-                        EmptyState("No watch history", "Media you play will show up here.")
-                    } else {
-                        LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            items(history) { entry ->
-                                val media = allMedia.find { it.id == entry.mediaId }
-                                Card(
-                                    colors = CardDefaults.cardColors(containerColor = DarkCard),
-                                    shape = RoundedCornerShape(12.dp),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            media?.let { onPlayMedia(it) }
-                                        }
-                                ) {
-                                    Column(modifier = Modifier.padding(14.dp)) {
-                                        Text(media?.title ?: "Unknown Media", color = Color.White, fontWeight = FontWeight.SemiBold)
-                                        Spacer(modifier = Modifier.height(6.dp))
-                                        if (entry.durationMs > 0) {
-                                            val progress = (entry.positionMs.toFloat() / entry.durationMs.toFloat()).coerceIn(0f, 1f)
-                                            LinearProgressIndicator(
-                                                progress = { progress },
-                                                modifier = Modifier.fillMaxWidth(),
-                                                color = NeonViolet,
-                                                trackColor = DarkSurfaceVariant
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+    // Filter media items
+    val watchLaterItems = allMedia.filter { it.isWatchLater && !it.isVault }
+    val historyItems = allMedia.filter { it.lastPositionMs > 0 && !it.isVault }
+        .sortedByDescending { it.lastPlayedTimestamp }
 
-        if (showCreateDialog) {
-            var newTitle by remember { mutableStateOf("") }
-            var newDesc by remember { mutableStateOf("") }
-
-            AlertDialog(
-                onDismissRequest = { showCreateDialog = false },
-                title = { Text("New Playlist") },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        OutlinedTextField(
-                            value = newTitle,
-                            onValueChange = { newTitle = it },
-                            label = { Text("Playlist Title") },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        OutlinedTextField(
-                            value = newDesc,
-                            onValueChange = { newDesc = it },
-                            label = { Text("Description (Optional)") },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            if (newTitle.isNotEmpty()) {
-                                onCreatePlaylist(newTitle, newDesc)
-                                showCreateDialog = false
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = NeonViolet)
-                    ) {
-                        Text("Create")
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showCreateDialog = false }) { Text("Cancel") }
-                },
-                containerColor = DarkSurfaceVariant
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("playlists_screen"),
+        color = DarkBackground
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            MemecioTopBar(
+                title = "Koleksi & Riwayat",
+                onDisguiseClick = onDisguiseClick
             )
+
+            // Tabs Header
+            TabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = DarkSurfaceCard,
+                contentColor = CyberPrimaryBright,
+                indicator = { tabPositions ->
+                    TabRowDefaults.SecondaryIndicator(
+                        Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                        color = CyberPrimaryBright
+                    )
+                }
+            ) {
+                tabTitles.forEachIndexed { index, title ->
+                    Tab(
+                        selected = selectedTab == index,
+                        onClick = { selectedTab = index },
+                        text = {
+                            Text(
+                                text = title,
+                                fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal,
+                                color = if (selectedTab == index) CyberPrimaryBright else TextSecondary
+                            )
+                        }
+                    )
+                }
+            }
+
+            when (selectedTab) {
+                // Tab 0: Playlists
+                0 -> {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        contentPadding = PaddingValues(bottom = 100.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        item {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Daftar Putar Kustom (${playlists.size})",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+
+                                Button(
+                                    onClick = { showCreateDialog = true },
+                                    colors = ButtonDefaults.buttonColors(containerColor = CyberPrimary),
+                                    shape = RoundedCornerShape(10.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Buat Baru", fontSize = 12.sp)
+                                }
+                            }
+                        }
+
+                        items(playlists, key = { it.id }) { pl ->
+                            PlaylistCard(
+                                playlist = pl,
+                                allMedia = allMedia,
+                                onPlayAll = {
+                                    val firstItem = allMedia.firstOrNull { it.id in pl.itemIds }
+                                    firstItem?.let { onMediaClick(it) }
+                                },
+                                onDelete = { onDeletePlaylist(pl.id) }
+                            )
+                        }
+                    }
+                }
+
+                // Tab 1: Watch Later
+                1 -> {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        contentPadding = PaddingValues(bottom = 100.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        item {
+                            Text(
+                                text = "Daftar Tonton Nanti (${watchLaterItems.size})",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                        }
+
+                        if (watchLaterItems.isEmpty()) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 40.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Belum ada item di Tonton Nanti.\nTambahkan media favorit Anda untuk ditonton nanti.",
+                                        color = TextSecondary,
+                                        fontSize = 13.sp,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                    )
+                                }
+                            }
+                        } else {
+                            items(watchLaterItems, key = { it.id }) { item ->
+                                MediaItemCard(
+                                    item = item,
+                                    onClick = { onMediaClick(item) },
+                                    onToggleFavorite = { onToggleFavorite(item.id) }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Tab 2: Riwayat (History)
+                2 -> {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        contentPadding = PaddingValues(bottom = 100.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        item {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Riwayat Tontonan (${historyItems.size})",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+
+                                if (historyItems.isNotEmpty()) {
+                                    TextButton(onClick = onClearHistory) {
+                                        Text("Bersihkan", color = CyberAccentPink, fontSize = 12.sp)
+                                    }
+                                }
+                            }
+                        }
+
+                        if (historyItems.isEmpty()) {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 40.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Belum ada riwayat pemutaran.",
+                                        color = TextSecondary,
+                                        fontSize = 13.sp
+                                    )
+                                }
+                            }
+                        } else {
+                            items(historyItems, key = { it.id }) { item ->
+                                MediaItemCard(
+                                    item = item,
+                                    onClick = { onMediaClick(item) },
+                                    onToggleFavorite = { onToggleFavorite(item.id) }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
+    }
+
+    // Create Playlist Dialog
+    if (showCreateDialog) {
+        var playlistName by remember { mutableStateOf("") }
+        var playlistDesc by remember { mutableStateOf("") }
+
+        AlertDialog(
+            onDismissRequest = { showCreateDialog = false },
+            title = { Text("Buat Daftar Putar Baru", color = TextPrimary) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = playlistName,
+                        onValueChange = { playlistName = it },
+                        label = { Text("Nama Daftar Putar") },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            focusedBorderColor = CyberPrimaryBright,
+                            unfocusedBorderColor = GlassBorder
+                        ),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = playlistDesc,
+                        onValueChange = { playlistDesc = it },
+                        label = { Text("Deskripsi (Opsional)") },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            focusedBorderColor = CyberPrimaryBright,
+                            unfocusedBorderColor = GlassBorder
+                        ),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (playlistName.isNotBlank()) {
+                            onCreatePlaylist(playlistName, playlistDesc)
+                            showCreateDialog = false
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = CyberPrimary)
+                ) {
+                    Text("Buat")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCreateDialog = false }) {
+                    Text("Batal", color = TextSecondary)
+                }
+            },
+            containerColor = DarkBackground
+        )
     }
 }
 
 @Composable
-private fun PlaylistRowCard(
+fun PlaylistCard(
     playlist: Playlist,
-    itemCount: Int,
+    allMedia: List<MediaItem>,
     onPlayAll: () -> Unit,
     onDelete: () -> Unit
 ) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = DarkCard),
-        shape = RoundedCornerShape(14.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(46.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(NeonViolet.copy(alpha = 0.2f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.AutoMirrored.Filled.QueueMusic, null, tint = NeonViolet, modifier = Modifier.size(26.dp))
-            }
-            Spacer(modifier = Modifier.width(14.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(playlist.title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Text("$itemCount items • ${playlist.description}", color = TextSecondary, fontSize = 12.sp)
-            }
-            IconButton(onClick = onPlayAll) {
-                Icon(Icons.Default.PlayArrow, "Play", tint = NeonCyan)
-            }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, "Delete", tint = AccentError.copy(alpha = 0.8f))
-            }
-        }
-    }
-}
+    val itemsInPlaylist = allMedia.filter { it.id in playlist.itemIds }
 
-@Composable
-private fun EmptyState(title: String, subtitle: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .border(1.dp, GlassBorder, RoundedCornerShape(16.dp)),
+        color = DarkSurfaceCard
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(Icons.Default.FolderOpen, null, tint = TextMuted, modifier = Modifier.size(54.dp))
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(subtitle, color = TextSecondary, fontSize = 13.sp)
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(CyberPrimary.copy(alpha = 0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PlaylistPlay,
+                            contentDescription = null,
+                            tint = CyberPrimaryBright,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
+                    Column {
+                        Text(
+                            text = playlist.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "${itemsInPlaylist.size} Media" + if (playlist.description.isNotEmpty()) " • ${playlist.description}" else "",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    }
+                }
+
+                Row {
+                    if (itemsInPlaylist.isNotEmpty()) {
+                        IconButton(onClick = onPlayAll) {
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = "Putar Semua",
+                                tint = CyberSecondary
+                            )
+                        }
+                    }
+
+                    IconButton(onClick = onDelete) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Hapus",
+                            tint = TextMuted
+                        )
+                    }
+                }
+            }
         }
     }
 }

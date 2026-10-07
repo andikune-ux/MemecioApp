@@ -2,367 +2,388 @@ package com.memecio.app.ui.screens
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.AddLink
+import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.ListAlt
+import androidx.compose.material.icons.filled.LiveTv
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.memecio.app.data.MediaItem
 import com.memecio.app.data.MediaType
-import com.memecio.app.ui.theme.*
+import com.memecio.app.ui.components.MediaItemCard
+import com.memecio.app.ui.components.MemecioTopBar
+import com.memecio.app.ui.theme.CyberAccentPink
+import com.memecio.app.ui.theme.CyberPrimary
+import com.memecio.app.ui.theme.CyberPrimaryBright
+import com.memecio.app.ui.theme.CyberSecondary
+import com.memecio.app.ui.theme.CyberTertiary
+import com.memecio.app.ui.theme.DarkBackground
+import com.memecio.app.ui.theme.DarkSurfaceCard
+import com.memecio.app.ui.theme.DarkSurfaceVariant
+import com.memecio.app.ui.theme.GlassBorder
+import com.memecio.app.ui.theme.TextMuted
+import com.memecio.app.ui.theme.TextPrimary
+import com.memecio.app.ui.theme.TextSecondary
 import java.util.UUID
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SourcesScreen(
+    mediaList: List<MediaItem>,
     onAddMedia: (MediaItem) -> Unit,
     onImportM3u: (String) -> Unit,
-    onBack: () -> Unit
+    onMediaClick: (MediaItem) -> Unit,
+    onToggleFavorite: (String) -> Unit,
+    onToggleVault: (String) -> Unit,
+    onDeleteMedia: (String) -> Unit,
+    onDisguiseClick: () -> Unit
 ) {
     var showAddUrlDialog by remember { mutableStateOf(false) }
     var showM3uDialog by remember { mutableStateOf(false) }
-    var snackbarHostState = remember { SnackbarHostState() }
 
-    // Android 13+ Photo/Video picker
-    val pickMediaLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
+    // Picker for local device video / audio files
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
-        if (uri != null) {
-            val newItem = MediaItem(
-                id = UUID.randomUUID().toString(),
-                title = "Local Media (${System.currentTimeMillis() % 10000})",
-                uri = uri.toString(),
-                type = MediaType.VIDEO,
-                category = "Local Device"
+        uri?.let {
+            val title = it.lastPathSegment ?: "Media Perangkat"
+            val item = MediaItem(
+                id = "local_" + UUID.randomUUID().toString().take(8),
+                title = title.substringAfterLast('/'),
+                uri = it.toString(),
+                type = if (it.toString().contains("audio")) MediaType.AUDIO else MediaType.VIDEO,
+                category = "Penyimpanan Lokal",
+                description = "File media dari penyimpanan internal perangkat"
             )
-            onAddMedia(newItem)
+            onAddMedia(item)
         }
     }
 
-    Scaffold(
-        containerColor = DarkBg,
-        topBar = {
-            TopAppBar(
-                title = { Text("Media Sources & Streams", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkSurface,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
-                )
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("sources_screen"),
+        color = DarkBackground
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            MemecioTopBar(
+                title = "Sumber Streaming",
+                onDisguiseClick = onDisguiseClick
             )
-        }
-    ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item {
-                Text(
-                    text = "Add External Media",
-                    color = NeonCyan,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
 
-            // Option 1: Direct URL
-            item {
-                SourceActionCard(
-                    title = "Add Streaming URL",
-                    description = "Direct HLS (.m3u8), MP4, MKV, or Audio stream link",
-                    icon = Icons.Default.Link,
-                    iconTint = NeonViolet,
-                    onClick = { showAddUrlDialog = true }
-                )
-            }
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                contentPadding = PaddingValues(bottom = 100.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Quick actions cards
+                item {
+                    Text(
+                        text = "Tambah Sumber",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
 
-            // Option 2: M3U Playlist Parser
-            item {
-                SourceActionCard(
-                    title = "Import M3U / IPTV Playlist",
-                    description = "Parse channel lists, groups, and logos from M3U text",
-                    icon = Icons.AutoMirrored.Filled.PlaylistPlay,
-                    iconTint = NeonPink,
-                    onClick = { showM3uDialog = true }
-                )
-            }
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        SourceActionCard(
+                            title = "URL Stream",
+                            subtitle = "M3U8 / MP4 / HLS",
+                            icon = Icons.Default.AddLink,
+                            tint = CyberSecondary,
+                            modifier = Modifier.weight(1f),
+                            onClick = { showAddUrlDialog = true }
+                        )
 
-            // Option 3: Local Storage Picker
-            item {
-                SourceActionCard(
-                    title = "Select Local Storage Media",
-                    description = "Import video, photo, or audio using Android Media Picker",
-                    icon = Icons.Default.FolderOpen,
-                    iconTint = NeonCyan,
-                    onClick = {
-                        pickMediaLauncher.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
+                        SourceActionCard(
+                            title = "Daftar M3U",
+                            subtitle = "Saluran IPTV Lengkap",
+                            icon = Icons.Default.ListAlt,
+                            tint = CyberPrimaryBright,
+                            modifier = Modifier.weight(1f),
+                            onClick = { showM3uDialog = true }
+                        )
+
+                        SourceActionCard(
+                            title = "Penyimpanan",
+                            subtitle = "Berkas Lokal",
+                            icon = Icons.Default.FolderOpen,
+                            tint = CyberTertiary,
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                filePickerLauncher.launch(arrayOf("video/*", "audio/*"))
+                            }
                         )
                     }
-                )
-            }
+                }
 
-            item {
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = "One-Click Demo & Live Streams",
-                    color = NeonCyan,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+                // Curated IPTV & Stream List
+                item {
+                    Text(
+                        text = "Saluran & Sumber Aktif (${mediaList.count { !it.isVault }})",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary,
+                        modifier = Modifier.padding(top = 10.dp)
+                    )
+                }
 
-            // Presets
-            val presets = listOf(
-                MediaItem(
-                    id = "preset_nasa",
-                    title = "NASA TV Live Public Stream",
-                    uri = "https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8",
-                    type = MediaType.STREAM_HLS,
-                    category = "Live TV",
-                    thumbnailUri = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=500"
-                ),
-                MediaItem(
-                    id = "preset_lofi",
-                    title = "Lo-Fi Beats 24/7 Radio",
-                    uri = "https://streams.ilovemusic.de/iloveradio17.mp3",
-                    type = MediaType.AUDIO,
-                    category = "Music",
-                    thumbnailUri = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500"
-                ),
-                MediaItem(
-                    id = "preset_bbb",
-                    title = "Big Buck Bunny Full HD",
-                    uri = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-                    type = MediaType.VIDEO,
-                    category = "Movies",
-                    durationMs = 596000L
-                )
-            )
-
-            items(presets) { preset ->
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = DarkCard),
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(preset.title, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
-                            Text(preset.category, color = NeonCyan, fontSize = 12.sp)
-                        }
-                        Button(
-                            onClick = { onAddMedia(preset) },
-                            colors = ButtonDefaults.buttonColors(containerColor = NeonViolet),
-                            shape = RoundedCornerShape(10.dp),
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
-                        ) {
-                            Text("Add", fontSize = 13.sp)
-                        }
-                    }
+                items(mediaList.filter { !it.isVault }, key = { it.id }) { item ->
+                    MediaItemCard(
+                        item = item,
+                        onClick = { onMediaClick(item) },
+                        onToggleFavorite = { onToggleFavorite(item.id) },
+                        onToggleVault = { onToggleVault(item.id) },
+                        onDelete = { onDeleteMedia(item.id) }
+                    )
                 }
             }
         }
+    }
 
-        // Add Direct URL Dialog
-        if (showAddUrlDialog) {
-            var inputTitle by remember { mutableStateOf("") }
-            var inputUrl by remember { mutableStateOf("") }
-            var inputCategory by remember { mutableStateOf("Streams") }
+    // Add Direct Stream Dialog
+    if (showAddUrlDialog) {
+        var inputTitle by remember { mutableStateOf("") }
+        var inputUrl by remember { mutableStateOf("") }
+        var inputCategory by remember { mutableStateOf("Streaming") }
 
-            AlertDialog(
-                onDismissRequest = { showAddUrlDialog = false },
-                title = { Text("Add Stream URL") },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        OutlinedTextField(
-                            value = inputTitle,
-                            onValueChange = { inputTitle = it },
-                            label = { Text("Stream Title") },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
-                            ),
-                            modifier = Modifier.fillMaxWidth().testTag("add_url_title_field")
-                        )
-                        OutlinedTextField(
-                            value = inputUrl,
-                            onValueChange = { inputUrl = it },
-                            label = { Text("URL (HLS, MP4, MP3)") },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
-                            ),
-                            modifier = Modifier.fillMaxWidth().testTag("add_url_field")
-                        )
-                        OutlinedTextField(
-                            value = inputCategory,
-                            onValueChange = { inputCategory = it },
-                            label = { Text("Category") },
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            if (inputUrl.isNotEmpty()) {
-                                val isHls = inputUrl.contains(".m3u8")
-                                onAddMedia(
-                                    MediaItem(
-                                        id = UUID.randomUUID().toString(),
-                                        title = if (inputTitle.isNotEmpty()) inputTitle else "Stream Channel",
-                                        uri = inputUrl.trim(),
-                                        type = if (isHls) MediaType.STREAM_HLS else MediaType.STREAM_MP4,
-                                        category = if (inputCategory.isNotEmpty()) inputCategory else "Streams"
-                                    )
-                                )
-                                showAddUrlDialog = false
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = NeonViolet),
-                        modifier = Modifier.testTag("submit_add_url_btn")
-                    ) {
-                        Text("Add Stream")
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showAddUrlDialog = false }) {
-                        Text("Cancel")
-                    }
-                },
-                containerColor = DarkSurfaceVariant
+        AlertDialog(
+            onDismissRequest = { showAddUrlDialog = false },
+            title = { Text("Tambah Aliran Stream", color = TextPrimary) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedTextField(
+                        value = inputTitle,
+                        onValueChange = { inputTitle = it },
+                        label = { Text("Nama Saluran / Judul") },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            focusedBorderColor = CyberPrimaryBright,
+                            unfocusedBorderColor = GlassBorder
+                        ),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = inputUrl,
+                        onValueChange = { inputUrl = it },
+                        label = { Text("URL Stream (.m3u8, .mp4, dll)") },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            focusedBorderColor = CyberPrimaryBright,
+                            unfocusedBorderColor = GlassBorder
+                        ),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = inputCategory,
+                        onValueChange = { inputCategory = it },
+                        label = { Text("Kategori") },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            focusedBorderColor = CyberPrimaryBright,
+                            unfocusedBorderColor = GlassBorder
+                        ),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (inputUrl.isNotBlank()) {
+                            val newItem = MediaItem(
+                                id = "custom_" + UUID.randomUUID().toString().take(8),
+                                title = if (inputTitle.isNotBlank()) inputTitle else "Aliran Kustom",
+                                uri = inputUrl.trim(),
+                                type = if (inputUrl.contains(".m3u8")) MediaType.HLS else MediaType.VIDEO,
+                                category = if (inputCategory.isNotBlank()) inputCategory else "Streaming",
+                                description = "Aliran langsung ditambahkan manual"
+                            )
+                            onAddMedia(newItem)
+                            showAddUrlDialog = false
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = CyberPrimary)
+                ) {
+                    Text("Simpan")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddUrlDialog = false }) {
+                    Text("Batal", color = TextSecondary)
+                }
+            },
+            containerColor = DarkBackground
+        )
+    }
+
+    // Import M3U Dialog
+    if (showM3uDialog) {
+        var m3uContent by remember {
+            mutableStateOf(
+                """
+#EXTM3U
+#EXTINF:-1 tvg-logo="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400" group-title="Cinema",Blender Tears of Steel 4K
+https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4
+#EXTINF:-1 tvg-logo="https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400" group-title="Animasi",Big Buck Bunny HLS Multi-bitrate
+https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
+                """.trimIndent()
             )
         }
 
-        // M3U Playlist Dialog
-        if (showM3uDialog) {
-            var m3uContent by remember { mutableStateOf("") }
-
-            AlertDialog(
-                onDismissRequest = { showM3uDialog = false },
-                title = { Text("Import M3U Playlist") },
-                text = {
-                    Column {
-                        Text(
-                            text = "Paste M3U content below:",
-                            fontSize = 12.sp,
-                            color = TextSecondary
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        OutlinedTextField(
-                            value = m3uContent,
-                            onValueChange = { m3uContent = it },
-                            placeholder = { Text("#EXTM3U\n#EXTINF:-1,Channel 1\nhttp://...") },
-                            maxLines = 8,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(160.dp)
-                        )
-                    }
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            if (m3uContent.isNotEmpty()) {
-                                onImportM3u(m3uContent)
-                                showM3uDialog = false
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = NeonPink)
-                    ) {
-                        Text("Parse & Import")
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showM3uDialog = false }) { Text("Cancel") }
-                },
-                containerColor = DarkSurfaceVariant
-            )
-        }
+        AlertDialog(
+            onDismissRequest = { showM3uDialog = false },
+            title = { Text("Impor Playlist M3U", color = TextPrimary) },
+            text = {
+                Column {
+                    Text(
+                        text = "Tempel teks playlist format #EXTM3U di bawah ini:",
+                        fontSize = 12.sp,
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = m3uContent,
+                        onValueChange = { m3uContent = it },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            focusedBorderColor = CyberPrimaryBright,
+                            unfocusedBorderColor = GlassBorder,
+                            focusedContainerColor = DarkSurfaceCard,
+                            unfocusedContainerColor = DarkSurfaceCard
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp),
+                        maxLines = 8
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (m3uContent.isNotBlank()) {
+                            onImportM3u(m3uContent)
+                            showM3uDialog = false
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = CyberPrimary)
+                ) {
+                    Text("Impor Saluran")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showM3uDialog = false }) {
+                    Text("Batal", color = TextSecondary)
+                }
+            },
+            containerColor = DarkBackground
+        )
     }
 }
 
 @Composable
-private fun SourceActionCard(
+fun SourceActionCard(
     title: String,
-    description: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    iconTint: Color,
+    subtitle: String,
+    icon: ImageVector,
+    tint: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
+    Surface(
+        modifier = modifier
             .clip(RoundedCornerShape(16.dp))
-            .clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = DarkCard),
-        shape = RoundedCornerShape(16.dp)
+            .border(1.dp, GlassBorder, RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick),
+        color = DarkSurfaceCard
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.Center
         ) {
             Box(
                 modifier = Modifier
-                    .size(46.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(iconTint.copy(alpha = 0.2f)),
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(tint.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(imageVector = icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(26.dp))
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = tint,
+                    modifier = Modifier.size(20.dp)
+                )
             }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(description, color = TextSecondary, fontSize = 12.sp)
-            }
-            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextMuted)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary
+            )
+            Text(
+                text = subtitle,
+                fontSize = 10.sp,
+                color = TextSecondary,
+                maxLines = 1
+            )
         }
     }
 }

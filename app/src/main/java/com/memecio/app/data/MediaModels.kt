@@ -2,10 +2,9 @@ package com.memecio.app.data
 
 enum class MediaType {
     VIDEO,
+    HLS,
     AUDIO,
-    IMAGE,
-    STREAM_HLS,
-    STREAM_MP4
+    IMAGE
 }
 
 data class MediaItem(
@@ -13,43 +12,42 @@ data class MediaItem(
     val title: String,
     val uri: String,
     val type: MediaType = MediaType.VIDEO,
-    val thumbnailUri: String? = null,
+    val description: String = "",
     val durationMs: Long = 0L,
-    val category: String = "General",
+    val thumbnailUri: String? = null,
+    val category: String = "Umum",
+    val isVault: Boolean = false,
     val isFavorite: Boolean = false,
-    val isHidden: Boolean = false,
     val isWatchLater: Boolean = false,
-    val addedDate: Long = System.currentTimeMillis(),
-    val viewCount: Int = 0,
-    val sizeBytes: Long = 0L,
-    val description: String = ""
+    val lastPositionMs: Long = 0L,
+    val lastPlayedTimestamp: Long = 0L,
+    val dateAdded: Long = System.currentTimeMillis()
 )
 
 data class Playlist(
     val id: String,
-    val title: String,
+    val name: String,
     val description: String = "",
-    val mediaIds: List<String> = emptyList(),
+    val itemIds: List<String> = emptyList(),
     val createdAt: Long = System.currentTimeMillis()
-)
-
-data class HistoryEntry(
-    val mediaId: String,
-    val positionMs: Long,
-    val durationMs: Long,
-    val timestamp: Long = System.currentTimeMillis()
 )
 
 data class SecretCode(
     val code: String,
     val title: String,
     val description: String,
-    val isHidden: Boolean = false
+    val category: String
 )
 
-enum class DisplayMode {
-    AUTO,
-    PHONE,
-    TABLET,
-    TV
-}
+data class AppDiagnostic(
+    val deviceModel: String,
+    val androidVersion: String,
+    val appVersion: String,
+    val totalMemoryMb: Long,
+    val availableMemoryMb: Long,
+    val freeStorageMb: Long,
+    val networkStatus: String,
+    val totalWatchTimeMinutes: Long,
+    val activeMediaCount: Int,
+    val vaultItemCount: Int
+)

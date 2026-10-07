@@ -1,360 +1,385 @@
 package com.memecio.app.ui.screens
 
-import androidx.compose.animation.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.memecio.app.data.MediaItem
 import com.memecio.app.data.MediaType
-import com.memecio.app.ui.components.MediaThumbnailCard
-import com.memecio.app.ui.theme.*
+import com.memecio.app.ui.components.MediaItemCard
+import com.memecio.app.ui.components.MemecioTopBar
+import com.memecio.app.ui.theme.CyberAccentPink
+import com.memecio.app.ui.theme.CyberPrimary
+import com.memecio.app.ui.theme.CyberPrimaryBright
+import com.memecio.app.ui.theme.CyberSecondary
+import com.memecio.app.ui.theme.DarkBackground
+import com.memecio.app.ui.theme.DarkSurfaceCard
+import com.memecio.app.ui.theme.DarkSurfaceVariant
+import com.memecio.app.ui.theme.GlassBorder
+import com.memecio.app.ui.theme.TextMuted
+import com.memecio.app.ui.theme.TextPrimary
+import com.memecio.app.ui.theme.TextSecondary
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     mediaList: List<MediaItem>,
-    gridColumns: Int,
     onMediaClick: (MediaItem) -> Unit,
-    onFavoriteToggle: (String) -> Unit,
-    onWatchLaterToggle: (String) -> Unit,
-    onHideToggle: (String) -> Unit,
-    onAddToPlaylist: (MediaItem) -> Unit,
+    onToggleFavorite: (String) -> Unit,
+    onToggleVault: (String) -> Unit,
     onDeleteMedia: (String) -> Unit,
-    onDisguise: () -> Unit,
-    onOpenMultiview: () -> Unit,
-    onOpenSources: () -> Unit
+    onDisguiseClick: () -> Unit,
+    onAddStreamClick: () -> Unit
 ) {
+    var selectedCategory by remember { mutableStateOf("Semua") }
     var searchQuery by remember { mutableStateOf("") }
-    var selectedFilter by remember { mutableStateOf("All") }
-    var selectedCategory by remember { mutableStateOf("All") }
-    var sortBy by remember { mutableStateOf("Newest") }
-    var showSortMenu by remember { mutableStateOf(false) }
+    var isSearchActive by remember { mutableStateOf(false) }
 
-    // Categories extracted from media
-    val categories = remember(mediaList) {
-        listOf("All") + mediaList.map { it.category }.distinct().filter { it.isNotEmpty() }
+    val categories = listOf("Semua", "Live HLS", "Film", "Musik", "Favorit")
+
+    // Filtered media excluding vault items
+    val publicMedia = mediaList.filter { !it.isVault }
+    val featuredItem = publicMedia.firstOrNull()
+
+    val filteredList = publicMedia.filter { item ->
+        val matchesCategory = when (selectedCategory) {
+            "Semua" -> true
+            "Live HLS" -> item.type == MediaType.HLS
+            "Film" -> item.type == MediaType.VIDEO
+            "Musik" -> item.type == MediaType.AUDIO
+            "Favorit" -> item.isFavorite
+            else -> true
+        }
+        val matchesSearch = searchQuery.isBlank() ||
+                item.title.contains(searchQuery, ignoreCase = true) ||
+                item.category.contains(searchQuery, ignoreCase = true)
+
+        matchesCategory && matchesSearch
     }
 
-    // Filter media items (exclude hidden items - they belong in Vault!)
-    val filteredMedia = remember(mediaList, searchQuery, selectedFilter, selectedCategory, sortBy) {
-        var items = mediaList.filter { !it.isHidden }
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("home_screen"),
+        color = DarkBackground
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            MemecioTopBar(
+                title = "Beranda",
+                onDisguiseClick = onDisguiseClick,
+                onSearchClick = { isSearchActive = !isSearchActive }
+            )
 
-        // Filter by Type/List
-        items = when (selectedFilter) {
-            "Videos" -> items.filter { it.type == MediaType.VIDEO }
-            "Live Streams" -> items.filter { it.type == MediaType.STREAM_HLS || it.type == MediaType.STREAM_MP4 }
-            "Audio" -> items.filter { it.type == MediaType.AUDIO }
-            "Images" -> items.filter { it.type == MediaType.IMAGE }
-            "Favorites" -> items.filter { it.isFavorite }
-            "Watch Later" -> items.filter { it.isWatchLater }
-            else -> items
-        }
-
-        // Category filter
-        if (selectedCategory != "All") {
-            items = items.filter { it.category.equals(selectedCategory, ignoreCase = true) }
-        }
-
-        // Search query
-        if (searchQuery.isNotEmpty()) {
-            items = items.filter {
-                it.title.contains(searchQuery, ignoreCase = true) ||
-                it.category.contains(searchQuery, ignoreCase = true) ||
-                it.description.contains(searchQuery, ignoreCase = true)
-            }
-        }
-
-        // Sorting
-        when (sortBy) {
-            "Newest" -> items.sortedByDescending { it.addedDate }
-            "Oldest" -> items.sortedBy { it.addedDate }
-            "Title A-Z" -> items.sortedBy { it.title.lowercase() }
-            "Title Z-A" -> items.sortedByDescending { it.title.lowercase() }
-            "Views" -> items.sortedByDescending { it.viewCount }
-            else -> items
-        }
-    }
-
-    Scaffold(
-        containerColor = DarkBg,
-        topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(DarkSurface)
-                    .statusBarsPadding()
-            ) {
-                // Main Header Row
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(34.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(NeonViolet),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "Memec.io",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        // Multiview dual player
-                        IconButton(
-                            onClick = onOpenMultiview,
-                            modifier = Modifier.testTag("nav_multiview_btn")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.VerticalSplit,
-                                contentDescription = "Dual View",
-                                tint = NeonCyan
-                            )
-                        }
-
-                        // Add / Manage Sources
-                        IconButton(
-                            onClick = onOpenSources,
-                            modifier = Modifier.testTag("nav_sources_btn")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.AddLink,
-                                contentDescription = "Sources",
-                                tint = NeonViolet
-                            )
-                        }
-
-                        // Discreet Calculator Disguise Button
-                        FilledTonalIconButton(
-                            onClick = onDisguise,
-                            colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                containerColor = Color(0xFF2B2244)
-                            ),
-                            modifier = Modifier
-                                .size(38.dp)
-                                .testTag("nav_disguise_btn")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Calculate,
-                                contentDescription = "Disguise as Calculator",
-                                tint = NeonPink,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-                }
-
-                // Search Bar Field
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search media, streams, tags...", color = TextMuted) },
-                    leadingIcon = {
-                        Icon(Icons.Default.Search, contentDescription = "Search", tint = TextMuted)
-                    },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Default.Clear, contentDescription = "Clear", tint = TextMuted)
+            // Search Bar toggle
+            if (isSearchActive) {
+                Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("search_field"),
+                        placeholder = { Text("Cari judul atau saluran...", color = TextMuted) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            focusedBorderColor = CyberPrimaryBright,
+                            unfocusedBorderColor = GlassBorder,
+                            focusedContainerColor = DarkSurfaceCard,
+                            unfocusedContainerColor = DarkSurfaceCard
+                        ),
+                        singleLine = true,
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { searchQuery = "" }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Hapus",
+                                        tint = TextSecondary
+                                    )
+                                }
                             }
                         }
-                    },
-                    singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = DarkSurfaceVariant,
-                        unfocusedContainerColor = DarkSurfaceVariant,
-                        focusedBorderColor = NeonViolet,
-                        unfocusedBorderColor = Color.Transparent,
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp)
-                        .testTag("search_field")
-                )
+                    )
+                }
+            }
 
-                // Filter Types Row
-                LazyRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    val filters = listOf("All", "Videos", "Live Streams", "Audio", "Images", "Favorites", "Watch Later")
-                    items(filters) { filter ->
-                        val isSelected = selectedFilter == filter
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { selectedFilter = filter },
-                            label = { Text(filter) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                containerColor = DarkCard,
-                                labelColor = TextSecondary,
-                                selectedContainerColor = NeonViolet,
-                                selectedLabelColor = Color.White
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        )
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                contentPadding = PaddingValues(bottom = 100.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                // Featured Hero Banner
+                if (featuredItem != null && !isSearchActive) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(190.dp)
+                                .clip(RoundedCornerShape(20.dp))
+                                .border(1.dp, GlassBorder, RoundedCornerShape(20.dp))
+                                .clickable { onMediaClick(featuredItem) }
+                        ) {
+                            if (!featuredItem.thumbnailUri.isNullOrEmpty()) {
+                                AsyncImage(
+                                    model = featuredItem.thumbnailUri,
+                                    contentDescription = featuredItem.title,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                            // Gradient shadow
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.verticalGradient(
+                                            listOf(
+                                                Color.Transparent,
+                                                Color(0xBB090812),
+                                                Color(0xF5090812)
+                                            )
+                                        )
+                                    )
+                            )
+
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.Bottom
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(CyberAccentPink)
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = "UNGGULAN",
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                    }
+                                    Text(
+                                        text = featuredItem.category,
+                                        color = CyberPrimaryBright,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = featuredItem.title,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary,
+                                    maxLines = 1
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Button(
+                                        onClick = { onMediaClick(featuredItem) },
+                                        colors = ButtonDefaults.buttonColors(containerColor = CyberPrimary),
+                                        shape = RoundedCornerShape(12.dp),
+                                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.PlayArrow,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Putar Sekarang", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
+
+                                    Button(
+                                        onClick = onAddStreamClick,
+                                        colors = ButtonDefaults.buttonColors(containerColor = DarkSurfaceVariant),
+                                        shape = RoundedCornerShape(12.dp),
+                                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Add,
+                                            contentDescription = null,
+                                            tint = CyberSecondary,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Tambah Stream", fontSize = 12.sp, color = TextPrimary)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
-                // Sub-category and Sort Row
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 2.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Category selector row
-                    LazyRow(
-                        modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                // Category Chips
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(categories) { cat ->
-                            val isSelected = selectedCategory == cat
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = if (isSelected) NeonCyan.copy(alpha = 0.2f) else Color.Transparent,
-                                modifier = Modifier.clip(RoundedCornerShape(8.dp))
+                        for (cat in categories) {
+                            val isSelected = cat == selectedCategory
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (isSelected) CyberPrimary else DarkSurfaceCard)
+                                    .border(
+                                        1.dp,
+                                        if (isSelected) CyberPrimaryBright else GlassBorder,
+                                        RoundedCornerShape(12.dp)
+                                    )
+                                    .clickable { selectedCategory = cat }
+                                    .padding(horizontal = 14.dp, vertical = 8.dp)
                             ) {
                                 Text(
                                     text = cat,
-                                    color = if (isSelected) NeonCyan else TextMuted,
-                                    fontSize = 12.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                    modifier = Modifier
-                                        .clickable { selectedCategory = cat }
-                                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
-                        }
-                    }
-
-                    // Sort menu
-                    Box {
-                        TextButton(
-                            onClick = { showSortMenu = true },
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Icon(Icons.AutoMirrored.Filled.Sort, null, tint = TextSecondary, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(sortBy, color = TextSecondary, fontSize = 12.sp)
-                        }
-
-                        DropdownMenu(
-                            expanded = showSortMenu,
-                            onDismissRequest = { showSortMenu = false },
-                            modifier = Modifier.background(DarkSurfaceVariant)
-                        ) {
-                            listOf("Newest", "Oldest", "Title A-Z", "Title Z-A", "Views").forEach { sort ->
-                                DropdownMenuItem(
-                                    text = { Text(sort) },
-                                    onClick = {
-                                        sortBy = sort
-                                        showSortMenu = false
-                                    }
+                                    color = if (isSelected) Color.White else TextSecondary,
+                                    fontSize = 13.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                 )
                             }
                         }
                     }
                 }
-            }
-        }
-    ) { padding ->
-        if (filteredMedia.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.SearchOff,
-                        contentDescription = null,
-                        tint = TextMuted,
-                        modifier = Modifier.size(56.dp)
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = if (searchQuery.isNotEmpty()) "No media matches '$searchQuery'" else "No media found in this filter",
-                        color = TextSecondary,
-                        fontSize = 15.sp
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(
-                        onClick = onOpenSources,
-                        colors = ButtonDefaults.buttonColors(containerColor = NeonViolet),
-                        shape = RoundedCornerShape(12.dp)
+
+                // Section Header
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Add, null)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Add Media or Streams")
+                        Text(
+                            text = "Koleksi Media (${filteredList.size})",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+
+                        if (filteredList.isNotEmpty()) {
+                            Row(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        val randomItem = filteredList.random()
+                                        onMediaClick(randomItem)
+                                    }
+                                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Shuffle,
+                                    contentDescription = "Putar Acak",
+                                    tint = CyberSecondary,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Text(
+                                    text = "Acak",
+                                    color = CyberSecondary,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
                     }
                 }
-            }
-        } else {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(gridColumns.coerceIn(1, 4)),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .testTag("media_grid"),
-                contentPadding = PaddingValues(14.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                items(filteredMedia, key = { it.id }) { item ->
-                    MediaThumbnailCard(
-                        item = item,
-                        onClick = { onMediaClick(item) },
-                        onFavoriteToggle = { onFavoriteToggle(item.id) },
-                        onWatchLaterToggle = { onWatchLaterToggle(item.id) },
-                        onHideToggle = { onHideToggle(item.id) },
-                        onAddToPlaylist = { onAddToPlaylist(item) },
-                        onDelete = { onDeleteMedia(item.id) }
-                    )
+
+                // Media list items
+                if (filteredList.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 40.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = "Tidak ada media ditemukan",
+                                    color = TextSecondary,
+                                    fontSize = 14.sp
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Button(
+                                    onClick = onAddStreamClick,
+                                    colors = ButtonDefaults.buttonColors(containerColor = CyberPrimary)
+                                ) {
+                                    Text("Tambah Aliran / Video Baru")
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    items(filteredList, key = { it.id }) { item ->
+                        MediaItemCard(
+                            item = item,
+                            onClick = { onMediaClick(item) },
+                            onToggleFavorite = { onToggleFavorite(item.id) },
+                            onToggleVault = { onToggleVault(item.id) },
+                            onDelete = { onDeleteMedia(item.id) }
+                        )
+                    }
                 }
             }
         }
