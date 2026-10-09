@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#9061F9</color>
+    <color name="primary_dark">#7E3AF2</color>
+    <color name="secondary">#06B6D4</color>
+    <color name="bg_dark">#090812</color>
+    <color name="bg_cream">#FBF9F4</color>
+    <color name="text_dark">#1C1C1E</color>
+    <color name="text_grey">#8E8E93</color>
+    <color name="glass_fill">#261D1936</color>
+    <color name="glass_fill_light">#1AFFFFFF</color>
+    <color name="glass_selected_fill">#4D9061F9</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="nav_selected">#3F51B5</color>
+    <color name="nav_unselected">#9E9E9E</color>
+</resources>

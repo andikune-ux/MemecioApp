@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="320dp"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog_rounded"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Pengatur Waktu Auto Exit"
+        android:textSize="17sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_dark"
+        android:gravity="center"
+        android:layout_marginBottom="6dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Pilih durasi untuk menutup aplikasi secara otomatis saat tidak digunakan:"
+        android:textSize="12sp"
+        android:textColor="@color/text_grey"
+        android:gravity="center"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/btnExit5"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="5 Menit"
+        android:background="@drawable/bg_glass_button"
+        android:textColor="@color/text_dark"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/btnExit15"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="15 Menit"
+        android:background="@drawable/bg_glass_button"
+        android:textColor="@color/text_dark"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/btnExit30"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="30 Menit"
+        android:background="@drawable/bg_glass_button"
+        android:textColor="@color/text_dark"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/btnExit60"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="1 Jam"
+        android:background="@drawable/bg_glass_button"
+        android:textColor="@color/text_dark"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/btnExit120"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="2 Jam"
+        android:background="@drawable/bg_glass_button"
+        android:textColor="@color/text_dark"
+        android:layout_marginBottom="12dp" />
+
+    <Button
+        android:id="@+id/btnExitCancel"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="Matikan Auto Exit"
+        android:background="@drawable/bg_button_outline"
+        android:textColor="#D32F2F"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/btnExitBatal"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="Tutup"
+        android:background="@drawable/bg_glass_button"
+        android:textColor="@color/text_grey" />
+
+</LinearLayout>

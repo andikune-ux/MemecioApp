@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_app_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="10dp"
+            android:background="@drawable/bg_glass_card">
+
+            <TextView
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:text="io"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:gravity="center"
+                android:background="@drawable/bg_glass_button_selected" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Memec.io"
+                android:textColor="@color/text_dark"
+                android:textSize="12sp"
+                android:fontFamily="sans-serif-medium"
+                android:layout_marginStart="8dp" />
+
+            <TextView
+                android:id="@+id/tvHariTanggal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="10sp"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="@color/text_grey"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/tvKoneksiIndicator"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="●"
+                android:textSize="12sp"
+                android:textColor="#000000"
+                android:layout_marginEnd="6dp"
+                android:includeFontPadding="false" />
+
+            <TextView
+                android:id="@+id/tvJamRealtime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="@color/text_dark" />
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:orientation="horizontal"
+            android:background="@android:color/transparent"
+            android:elevation="0dp"
+            android:paddingStart="4dp" android:paddingEnd="4dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+
+            <LinearLayout
+                android:id="@+id/btnBeranda"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/bg_glass_button_selected"
+                android:clickable="true"
+                android:focusable="true">
+                <ImageView
+                    android:id="@+id/tvIconBeranda"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_home" />
+                <TextView
+                    android:id="@+id/tvLabelBeranda"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Beranda"
+                    android:textSize="9sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:layout_marginTop="2dp"
+                    android:textColor="#FFFFFF" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/btnSumber"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true">
+                <ImageView
+                    android:id="@+id/tvIconSumber"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_source"
+                    app:tint="@color/nav_unselected" />
+                <TextView
+                    android:id="@+id/tvLabelSumber"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sumber"
+                    android:textSize="9sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/nav_unselected" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/btnProfil"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true">
+                <ImageView
+                    android:id="@+id/tvIconProfil"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_profile"
+                    app:tint="@color/nav_unselected" />
+                <TextView
+                    android:id="@+id/tvLabelProfil"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Profil"
+                    android:textSize="9sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/nav_unselected" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

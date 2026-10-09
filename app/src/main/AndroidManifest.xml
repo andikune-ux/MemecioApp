@@ -8,14 +8,21 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
-    <!-- Optional Media Permissions for local browsing -->
+    <!-- Storage & Media Permissions -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
     <application
         android:name=".MemecioApplication"
@@ -28,6 +35,18 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="35">
 
+        <!-- Calculator as Stealth / Decoy Launcher Gate -->
+        <activity
+            android:name=".CalculatorActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize"
@@ -35,12 +54,81 @@
             android:launchMode="singleTop"
             android:resizeableActivity="true"
             android:supportsPictureInPicture="true"
-            android:windowSoftInputMode="adjustResize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".PreviewImageActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
+
+        <activity
+            android:name=".VideoPlayerActivity"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
+            android:exported="false"
+            android:supportsPictureInPicture="true"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
+
+        <activity
+            android:name=".MultiviewActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
+
+        <activity
+            android:name=".StreamingSourceActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".DriveSourceActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ServerSourceActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".RiwayatActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".PinDialogActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <activity
+            android:name=".SecretCodesActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".CrashHistoryActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ChangelogActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".SystemInfoActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".NetworkInfoActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".PermissionInfoActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".StorageAnalyzerActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".DownloadListActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".StatistikActivity"
+            android:exported="false" />
 
     </application>
 
